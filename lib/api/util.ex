@@ -16,7 +16,7 @@ defmodule Gateway.Router.Util do
 
   @spec respond(Plug.Conn.t(), {:error, atom, binary}) :: Plug.Conn.t()
   def respond(conn, {:error, code, reason}) do
-    respond(conn, {:error, 404, code, reason})
+    respond(conn, {:error, 500, code, reason})
   end
 
   @spec respond(Plug.Conn.t(), {:error, integer, atom, binary}) :: Plug.Conn.t()

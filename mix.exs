@@ -23,6 +23,7 @@ defmodule Gateway.MixProject do
       {:gen_registry, "~> 1.1.0"},
       {:plug_cowboy, "~> 2.0"},
       {:prometheus_plugs, "~> 1.1"},
+      {:corsica, "~> 1.0"},
       {:prometheus_ex,
        git: "https://github.com/lanodan/prometheus.ex", branch: "fix/elixir-1.14", override: true},
       {:redix, "~> 1.1"},

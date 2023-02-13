@@ -3,6 +3,13 @@ defmodule Gateway.Router do
 
   use Plug.Router
 
+  plug(Corsica,
+    origins: "*",
+    max_age: 600,
+    allow_methods: :all,
+    allow_headers: :all
+  )
+
   plug(:match)
   plug(:dispatch)
 
@@ -10,42 +17,37 @@ defmodule Gateway.Router do
     send_resp(conn, 200, "OK")
   end
 
-  patch "/status" do
-    key = conn |> Plug.Conn.get_req_header("authorization")
+  get "/groups" do
+    list =
+      GenRegistry.reduce(Gateway.Group, [], fn
+        {_id, pid}, list ->
+          state = GenServer.call(pid, {:get_state})
 
-    {:ok, body, conn} = Plug.Conn.read_body(conn, length: 1_000_000)
+          if state.visibility == "public" do
+            [state | list]
+          else
+            list
+          end
+      end)
 
-    {:ok, key} = Redix.command(:redix, ["GET", "gw/token:#{key}"])
+    Util.respond(conn, {:ok, list})
+  end
 
-    case key do
-      nil ->
-        Util.no_permission(conn)
+  get "/groups/:id" do
+    case GenRegistry.lookup(Gateway.Group, id) do
+      {:ok, pid} ->
+        group_state = GenServer.call(pid, {:get_state})
 
-      _ ->
-        case Jason.decode(body) do
-          {:ok, json} when is_map(json) ->
-            Redix.command(
-              :redix,
-              Enum.concat(
-                ["HSET", "status/current"],
-                Gateway.Connectivity.RedisUtils.map_to_list(json)
-              )
-            )
+        Util.respond(conn, {:ok, group_state})
 
-            {_max_id, _max_pid} =
-              GenRegistry.reduce(Gateway.Session, {nil, -1}, fn
-                {_id, pid}, {_, _current} = _acc ->
-                  send(pid, {:send_status, json})
-              end)
-
-            :ok
-
-          _ ->
-            :ok
-        end
-
-        Util.respond(conn, {:ok})
+      {:error, :not_found} ->
+        Util.respond(conn, {:error, 404, :group_not_found, "Invalid group id provided"})
     end
+  end
+
+  options _ do
+    conn
+    |> send_resp(204, "")
   end
 
   match _ do

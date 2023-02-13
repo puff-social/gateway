@@ -131,7 +131,8 @@ defmodule Gateway.Socket.Handler do
         group_id =
           for _ <- 1..6, into: "", do: <<Enum.random('0123456789abcdefghijklmnopqrstuvwxyz')>>
 
-        {:ok, pid} = GenRegistry.lookup_or_start(Gateway.Group, group_id, [%{group_id: group_id}])
+        {:ok, _pid} =
+          GenRegistry.lookup_or_start(Gateway.Group, group_id, [%{group_id: group_id}])
 
         send(
           self(),

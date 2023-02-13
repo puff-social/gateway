@@ -65,8 +65,8 @@ defmodule Gateway.Session do
       state.linked_socket,
       {:send_op, 2,
        %{
-         id: group_state.group_id,
          name: group_state.name,
+         group_id: group_state.group_id,
          visibility: group_state.visibility,
          members: Enum.concat(group_state.members, [state.session_id])
        }}

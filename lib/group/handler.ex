@@ -6,6 +6,28 @@ defmodule Gateway.Group do
             visibility: nil,
             members: []
 
+  defimpl Jason.Encoder do
+    def encode(
+          %Gateway.Group{
+            group_id: group_id,
+            name: name,
+            visibility: visibility,
+            members: members
+          },
+          opts
+        ) do
+      Jason.Encode.map(
+        %{
+          "group_id" => group_id,
+          "name" => name,
+          "visibility" => visibility,
+          "members" => members
+        },
+        opts
+      )
+    end
+  end
+
   def start_link(state) do
     GenServer.start_link(__MODULE__, state, name: :"#{state.group_id}")
   end
@@ -13,10 +35,12 @@ defmodule Gateway.Group do
   def init(state) do
     Process.flag(:trap_exit, true)
 
+    group_name = Gateway.Group.Name.generate()
+
     {:ok,
      %__MODULE__{
        group_id: state.group_id,
-       name: "Random name here",
+       name: group_name,
        visibility: "private",
        members: []
      }, {:continue, :setup_session}}
