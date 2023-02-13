@@ -65,14 +65,41 @@ defmodule Gateway.Group do
     {:noreply, state}
   end
 
-  def handle_cast({:join_group, session_id, session_pid}, state) do
+  def handle_cast({:update_channel_state, updated_state}, state) do
+    new_state =
+      Map.merge(state, updated_state |> Map.new(fn {k, v} -> {String.to_atom(k), v} end))
+
+    for member <- state.members do
+      {:ok, session} = GenRegistry.lookup(Gateway.Session, member)
+      GenServer.cast(session, {:send_group_update, new_state})
+    end
+
+    {:noreply, new_state}
+  end
+
+  def handle_cast({:group_user_update, session_id, session_state}, state) do
+    for member <- state.members do
+      if member !== session_id do
+        {:ok, session} = GenRegistry.lookup(Gateway.Session, member)
+
+        GenServer.cast(
+          session,
+          {:send_group_user_update, state.group_id, session_state}
+        )
+      end
+    end
+
+    {:noreply, state}
+  end
+
+  def handle_cast({:join_group, session_id, session_name, session_pid}, state) do
     IO.puts("Session #{session_id} joined #{state.group_id}")
     GenServer.cast(session_pid, {:send_join, state})
 
     for member <- state.members do
       if member !== session_id do
         {:ok, session} = GenRegistry.lookup(Gateway.Session, member)
-        GenServer.cast(session, {:send_user_join, state.group_id, session_id})
+        GenServer.cast(session, {:send_user_join, state.group_id, session_id, session_name})
       end
     end
 

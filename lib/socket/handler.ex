@@ -147,11 +147,11 @@ defmodule Gateway.Socket.Handler do
 
       # Edit group
       11 ->
-        {}
+        GenServer.cast(state.linked_session, {:edit_current_group, data["d"]})
 
       # Update user
       13 ->
-        {}
+        GenServer.cast(state.linked_session, {:update_session_state, data["d"]})
 
       _ ->
         nil
