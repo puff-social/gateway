@@ -35,12 +35,10 @@ defmodule Gateway.Group do
   def init(state) do
     Process.flag(:trap_exit, true)
 
-    group_name = Gateway.Group.Name.generate()
-
     {:ok,
      %__MODULE__{
        group_id: state.group_id,
-       name: group_name,
+       name: state.group_name,
        visibility: "private",
        members: []
      }, {:continue, :setup_session}}
