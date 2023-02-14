@@ -86,7 +86,7 @@ defmodule Gateway.Group do
 
         GenServer.cast(
           session,
-          {:send_group_user_update, state.group_id, session_state}
+          {:send_group_user_update, session_id, session_state}
         )
       end
     end
@@ -101,7 +101,7 @@ defmodule Gateway.Group do
 
         GenServer.cast(
           session,
-          {:send_group_user_device_update, state.group_id, device_state}
+          {:send_group_user_device_update, session_id, device_state}
         )
       end
     end

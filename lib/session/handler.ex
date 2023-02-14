@@ -77,7 +77,7 @@ defmodule Gateway.Session do
   end
 
   def handle_info({:send_init, socket}, state) when is_pid(socket) do
-    send(socket, {:send_op, 0, %{heartbeat_interval: 25000}})
+    send(socket, {:send_op, 0, %{session_id: state.session_id, heartbeat_interval: 25000}})
 
     {:noreply, state}
   end
@@ -138,7 +138,7 @@ defmodule Gateway.Session do
   def handle_cast({:send_group_user_device_update, session_id, device_state}, state) do
     send(
       state.linked_socket,
-      {:send_event, :GROUP_USER_DEVICE_UPDATED,
+      {:send_event, :GROUP_USER_DEVICE_UPDATE,
        %{group_id: state.group_id, session_id: session_id, device_state: device_state}}
     )
 
@@ -148,7 +148,7 @@ defmodule Gateway.Session do
   def handle_cast({:send_user_leave, group_id, session_id}, state) do
     send(
       state.linked_socket,
-      {:send_event, :GROUP_USER_LEAVE, %{group_id: group_id, session_id: session_id}}
+      {:send_event, :GROUP_USER_LEFT, %{group_id: group_id, session_id: session_id}}
     )
 
     {:noreply, state}
