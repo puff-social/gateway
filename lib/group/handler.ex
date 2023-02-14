@@ -4,6 +4,7 @@ defmodule Gateway.Group do
   defstruct group_id: nil,
             name: nil,
             visibility: nil,
+            state: nil,
             members: []
 
   defimpl Jason.Encoder do
@@ -12,6 +13,7 @@ defmodule Gateway.Group do
             group_id: group_id,
             name: name,
             visibility: visibility,
+            state: state,
             members: members
           },
           opts
@@ -21,6 +23,7 @@ defmodule Gateway.Group do
           "group_id" => group_id,
           "name" => name,
           "visibility" => visibility,
+          "state" => state,
           "members" => members
         },
         opts
@@ -38,8 +41,9 @@ defmodule Gateway.Group do
     {:ok,
      %__MODULE__{
        group_id: state.group_id,
-       name: state.group_name,
+       name: state.name,
        visibility: "private",
+       state: "chilling",
        members: []
      }, {:continue, :setup_session}}
   end
@@ -83,6 +87,21 @@ defmodule Gateway.Group do
         GenServer.cast(
           session,
           {:send_group_user_update, state.group_id, session_state}
+        )
+      end
+    end
+
+    {:noreply, state}
+  end
+
+  def handle_cast({:group_user_device_update, session_id, device_state}, state) do
+    for member <- state.members do
+      if member !== session_id do
+        {:ok, session} = GenRegistry.lookup(Gateway.Session, member)
+
+        GenServer.cast(
+          session,
+          {:send_group_user_device_update, state.group_id, device_state}
         )
       end
     end

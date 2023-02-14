@@ -74,6 +74,20 @@ defmodule Gateway.Socket.Handler do
     end
   end
 
+  def websocket_info({:send_event, event, data}, state) do
+    send(
+      self(),
+      {:remote_send,
+       construct_msg(state.encoding, state.compression, %{
+         op: 3,
+         t: Atom.to_string(event),
+         d: data
+       })}
+    )
+
+    {:ok, state}
+  end
+
   def websocket_info({:send_op, op, data}, state) do
     send(
       self(),
@@ -127,34 +141,36 @@ defmodule Gateway.Socket.Handler do
         GenServer.cast(state.linked_session, {:join_group, data["d"]["group_id"]})
 
       # Create group
-      5 ->
+      2 ->
         group_id =
           for _ <- 1..6, into: "", do: <<Enum.random('0123456789abcdefghijklmnopqrstuvwxyz')>>
 
-        group_name = Gateway.Group.Name.generate()
+        group_name = data["d"]["name"] || Gateway.Group.Name.generate()
+
+        IO.puts("Create group #{group_id} #{group_name}")
 
         {:ok, _pid} =
           GenRegistry.lookup_or_start(Gateway.Group, group_id, [
-            %{group_id: group_id, group_name: group_name}
+            %{group_id: group_id, name: group_name}
           ])
 
         send(
           self(),
-          {:send_op, 6, %{id: group_id}}
+          {:send_event, :GROUP_CREATE, %{group_id: group_id, name: group_name}}
         )
 
-        GenServer.cast(state.linked_session, {:join_group, group_id})
+      # GenServer.cast(state.linked_session, {:join_group, group_id})
 
       # Send device state
-      8 ->
-        {}
+      4 ->
+        GenServer.cast(state.linked_session, {:update_device_state, data["d"]})
 
       # Edit group
-      11 ->
+      5 ->
         GenServer.cast(state.linked_session, {:edit_current_group, data["d"]})
 
       # Update user
-      13 ->
+      6 ->
         GenServer.cast(state.linked_session, {:update_session_state, data["d"]})
 
       _ ->

@@ -5,7 +5,31 @@ defmodule Gateway.Session do
             name: nil,
             linked_socket: nil,
             group_id: nil,
-            puffco_state: nil
+            device_state: nil
+
+  defimpl Jason.Encoder do
+    def encode(
+          %Gateway.Session{
+            session_id: session_id,
+            name: name,
+            linked_socket: linked_socket,
+            group_id: group_id,
+            device_state: device_state
+          },
+          opts
+        ) do
+      Jason.Encode.map(
+        %{
+          "session_id" => session_id,
+          "name" => name,
+          "linked_socket" => linked_socket,
+          "group_id" => group_id,
+          "device_state" => device_state
+        },
+        opts
+      )
+    end
+  end
 
   def start_link(state) do
     GenServer.start_link(__MODULE__, state, name: :"#{state.session_id}")
@@ -20,7 +44,7 @@ defmodule Gateway.Session do
        name: "Unnamed",
        linked_socket: nil,
        group_id: nil,
-       puffco_state: nil
+       device_state: %{}
      }, {:continue, :setup_session}}
   end
 
@@ -65,12 +89,26 @@ defmodule Gateway.Session do
   def handle_cast({:send_join, group_state}, state) do
     send(
       state.linked_socket,
-      {:send_op, 2,
+      {:send_event, :JOINED_GROUP,
        %{
          name: group_state.name,
          group_id: group_state.group_id,
          visibility: group_state.visibility,
-         members: Enum.concat(group_state.members, [state.session_id])
+         state: group_state.state,
+         members:
+           Enum.reduce(group_state.members, [], fn id, acc ->
+             {:ok, pid} = GenRegistry.lookup(Gateway.Session, id)
+             session_state = GenServer.call(pid, {:get_state})
+
+             [
+               %{
+                 name: session_state.name,
+                 session_id: session_state.session_id,
+                 device_state: session_state.device_state
+               }
+               | acc
+             ]
+           end)
        }}
     )
 
@@ -80,7 +118,8 @@ defmodule Gateway.Session do
   def handle_cast({:send_user_join, group_id, session_id, session_name}, state) do
     send(
       state.linked_socket,
-      {:send_op, 3, %{group_id: group_id, session_id: session_id, name: session_name}}
+      {:send_event, :GROUP_USER_JOIN,
+       %{group_id: group_id, session_id: session_id, name: session_name}}
     )
 
     {:noreply, state}
@@ -89,27 +128,40 @@ defmodule Gateway.Session do
   def handle_cast({:send_group_user_update, group_id, session_state}, state) do
     send(
       state.linked_socket,
-      {:send_op, 15,
+      {:send_event, :GROUP_USER_UPDATED,
        %{group_id: group_id, session_id: session_state.session_id, name: session_state.name}}
     )
 
     {:noreply, state}
   end
 
+  def handle_cast({:send_group_user_device_update, session_id, device_state}, state) do
+    send(
+      state.linked_socket,
+      {:send_event, :GROUP_USER_DEVICE_UPDATED,
+       %{group_id: state.group_id, session_id: session_id, device_state: device_state}}
+    )
+
+    {:noreply, state}
+  end
+
   def handle_cast({:send_user_leave, group_id, session_id}, state) do
-    send(state.linked_socket, {:send_op, 4, %{group_id: group_id, session_id: session_id}})
+    send(
+      state.linked_socket,
+      {:send_event, :GROUP_USER_LEAVE, %{group_id: group_id, session_id: session_id}}
+    )
 
     {:noreply, state}
   end
 
   def handle_cast({:send_group_update, group_state}, state) do
-    send(state.linked_socket, {:send_op, 12, group_state})
+    send(state.linked_socket, {:send_event, :GROUP_UPDATE, group_state})
 
     {:noreply, state}
   end
 
   def handle_cast({:send_group_delete, group_id}, state) do
-    send(state.linked_socket, {:send_op, 7, %{group_id: group_id}})
+    send(state.linked_socket, {:send_event, :GROUP_DELETE, %{group_id: group_id}})
 
     {:noreply, state}
   end
@@ -131,7 +183,7 @@ defmodule Gateway.Session do
 
         if Enum.member?(group_state.members, state.session_id) do
           IO.puts("Session #{state.session_id} tried to rejoin #{group_id}")
-          send(state.linked_socket, {:send_op, 8, %{code: "ALREADY_IN_GROUP"}})
+          send(state.linked_socket, {:send_event, :GROUP_JOIN_ERROR, %{code: "ALREADY_IN_GROUP"}})
           {:noreply, state}
         else
           IO.puts("Socket connection #{state.session_id} joined group #{group_id}")
@@ -146,6 +198,21 @@ defmodule Gateway.Session do
 
         {:noreply, state}
     end
+  end
+
+  def handle_cast({:update_device_state, device_state}, state) do
+    {:ok, group_pid} = GenRegistry.lookup(Gateway.Group, state.group_id)
+    GenServer.cast(group_pid, {:group_user_device_update, state.session_id, device_state})
+
+    {:noreply,
+     %{
+       state
+       | device_state:
+           Map.merge(
+             state.device_state,
+             device_state |> Map.new(fn {k, v} -> {String.to_atom(k), v} end)
+           )
+     }}
   end
 
   def handle_cast({:edit_current_group, group_data}, state) do
