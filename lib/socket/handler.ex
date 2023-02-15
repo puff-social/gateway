@@ -88,6 +88,19 @@ defmodule Gateway.Socket.Handler do
     {:ok, state}
   end
 
+  def websocket_info({:send_event, event}, state) do
+    send(
+      self(),
+      {:remote_send,
+       construct_msg(state.encoding, state.compression, %{
+         op: 3,
+         t: Atom.to_string(event)
+       })}
+    )
+
+    {:ok, state}
+  end
+
   def websocket_info({:send_op, op, data}, state) do
     send(
       self(),
