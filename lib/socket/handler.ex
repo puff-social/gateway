@@ -173,6 +173,14 @@ defmodule Gateway.Socket.Handler do
       6 ->
         GenServer.cast(state.linked_session, {:update_session_state, data["d"]})
 
+      # Leave group
+      7 ->
+        GenServer.cast(state.linked_session, {:leave_group})
+
+      # Start heating
+      8 ->
+        GenServer.cast(state.linked_session, {:start_group_heating})
+
       _ ->
         nil
     end

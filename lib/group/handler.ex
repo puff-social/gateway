@@ -94,16 +94,25 @@ defmodule Gateway.Group do
     {:noreply, state}
   end
 
-  def handle_cast({:group_user_device_update, session_id, device_state}, state) do
+  def handle_cast({:group_user_device_update, session_id, device_state, device_type}, state) do
     for member <- state.members do
       if member !== session_id do
         {:ok, session} = GenRegistry.lookup(Gateway.Session, member)
 
         GenServer.cast(
           session,
-          {:send_group_user_device_update, session_id, device_state}
+          {:send_group_user_device_update, session_id, device_state, device_type}
         )
       end
+    end
+
+    {:noreply, state}
+  end
+
+  def handle_cast({:start_group_heat}, state) do
+    for member <- state.members do
+      {:ok, session} = GenRegistry.lookup(Gateway.Session, member)
+      GenServer.cast(session, {:send_group_heat_start})
     end
 
     {:noreply, state}

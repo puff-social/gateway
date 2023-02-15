@@ -5,7 +5,8 @@ defmodule Gateway.Session do
             name: nil,
             linked_socket: nil,
             group_id: nil,
-            device_state: nil
+            device_state: nil,
+            device_type: nil
 
   defimpl Jason.Encoder do
     def encode(
@@ -14,7 +15,8 @@ defmodule Gateway.Session do
             name: name,
             linked_socket: linked_socket,
             group_id: group_id,
-            device_state: device_state
+            device_state: device_state,
+            device_type: device_type
           },
           opts
         ) do
@@ -24,7 +26,8 @@ defmodule Gateway.Session do
           "name" => name,
           "linked_socket" => linked_socket,
           "group_id" => group_id,
-          "device_state" => device_state
+          "device_state" => device_state,
+          "device_type" => device_type
         },
         opts
       )
@@ -104,7 +107,8 @@ defmodule Gateway.Session do
                %{
                  name: session_state.name,
                  session_id: session_state.session_id,
-                 device_state: session_state.device_state
+                 device_state: session_state.device_state,
+                 device_type: session_state.device_type
                }
                | acc
              ]
@@ -135,11 +139,25 @@ defmodule Gateway.Session do
     {:noreply, state}
   end
 
-  def handle_cast({:send_group_user_device_update, session_id, device_state}, state) do
+  def handle_cast({:send_group_user_device_update, session_id, device_state, device_type}, state) do
     send(
       state.linked_socket,
       {:send_event, :GROUP_USER_DEVICE_UPDATE,
-       %{group_id: state.group_id, session_id: session_id, device_state: device_state}}
+       %{
+         group_id: state.group_id,
+         session_id: session_id,
+         device_state: device_state,
+         device_type: device_type
+       }}
+    )
+
+    {:noreply, state}
+  end
+
+  def handle_cast({:send_group_heat_start}, state) do
+    send(
+      state.linked_socket,
+      {:send_event, :GROUP_START_HEATING}
     )
 
     {:noreply, state}
@@ -200,9 +218,28 @@ defmodule Gateway.Session do
     end
   end
 
-  def handle_cast({:update_device_state, device_state}, state) do
+  def handle_cast({:leave_group}, state) when state.group_id != nil do
+    case GenRegistry.lookup(Gateway.Group, state.group_id) do
+      {:ok, pid} ->
+        group_state = GenServer.call(pid, {:get_state})
+
+        if Enum.member?(group_state.members, state.session_id) do
+          GenServer.cast(pid, {:leave_group, state.session_id})
+          {:noreply, %{state | group_id: nil, device_state: %{}}}
+        end
+
+      {:error, :not_found} ->
+        {:noreply, %{state | group_id: nil, device_state: %{}}}
+    end
+  end
+
+  def handle_cast({:update_device_state, device_state}, state) when state.group_id != nil do
     {:ok, group_pid} = GenRegistry.lookup(Gateway.Group, state.group_id)
-    GenServer.cast(group_pid, {:group_user_device_update, state.session_id, device_state})
+
+    GenServer.cast(
+      group_pid,
+      {:group_user_device_update, state.session_id, device_state, state.device_type}
+    )
 
     {:noreply,
      %{
@@ -218,6 +255,13 @@ defmodule Gateway.Session do
   def handle_cast({:edit_current_group, group_data}, state) do
     {:ok, group_pid} = GenRegistry.lookup(Gateway.Group, state.group_id)
     GenServer.cast(group_pid, {:update_channel_state, group_data})
+
+    {:noreply, state}
+  end
+
+  def handle_cast({:start_group_heating}, state) do
+    {:ok, group_pid} = GenRegistry.lookup(Gateway.Group, state.group_id)
+    GenServer.cast(group_pid, {:start_group_heat})
 
     {:noreply, state}
   end
