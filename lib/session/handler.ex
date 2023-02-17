@@ -129,6 +129,15 @@ defmodule Gateway.Session do
     {:noreply, state}
   end
 
+  def handle_cast({:send_group_user_ready, session_id}, state) do
+    send(
+      state.linked_socket,
+      {:send_event, :GROUP_USER_READY, %{session_id: session_id}}
+    )
+
+    {:noreply, state}
+  end
+
   def handle_cast({:send_group_user_update, group_id, session_state}, state) do
     send(
       state.linked_socket,
@@ -159,6 +168,22 @@ defmodule Gateway.Session do
       state.linked_socket,
       {:send_event, :GROUP_START_HEATING}
     )
+
+    {:noreply, state}
+  end
+
+  def handle_cast({:send_group_heat_inquiry, session_id}, state) do
+    send(
+      state.linked_socket,
+      {:send_event, :GROUP_HEAT_INQUIRY, %{session_id: session_id}}
+    )
+
+    {:noreply, state}
+  end
+
+  def handle_cast({:inquire_group_heat}, state) when state.group_id != nil do
+    {:ok, group} = GenRegistry.lookup(Gateway.Group, state.group_id)
+    GenServer.cast(group, {:inquire_group_heat, state.session_id})
 
     {:noreply, state}
   end
@@ -240,6 +265,16 @@ defmodule Gateway.Session do
       group_pid,
       {:group_user_device_update, state.session_id, device_state, state.device_type}
     )
+
+    group_state = GenServer.call(group_pid, {:get_state})
+
+    if group_state.state == "awaiting" and device_state["state"] == 6 do
+      GenServer.cast(group_pid, {:group_user_ready, state.session_id})
+    end
+
+    if group_state.state == "seshing" and device_state["state"] == 5 do
+      GenServer.cast(group_pid, {:set_group_state, "chilling"})
+    end
 
     {:noreply,
      %{

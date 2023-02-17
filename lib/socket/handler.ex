@@ -172,8 +172,6 @@ defmodule Gateway.Socket.Handler do
           {:send_event, :GROUP_CREATE, %{group_id: group_id, name: group_name}}
         )
 
-      # GenServer.cast(state.linked_session, {:join_group, group_id})
-
       # Send device state
       4 ->
         GenServer.cast(state.linked_session, {:update_device_state, data["d"]})
@@ -190,9 +188,9 @@ defmodule Gateway.Socket.Handler do
       7 ->
         GenServer.cast(state.linked_session, {:leave_group})
 
-      # Start heating
+      # Inqiure heating
       8 ->
-        GenServer.cast(state.linked_session, {:start_group_heating})
+        GenServer.cast(state.linked_session, {:inquire_group_heat})
 
       _ ->
         nil

@@ -5,7 +5,8 @@ defmodule Gateway.Group do
             name: nil,
             visibility: nil,
             state: nil,
-            members: []
+            members: [],
+            ready: []
 
   defimpl Jason.Encoder do
     def encode(
@@ -14,7 +15,8 @@ defmodule Gateway.Group do
             name: name,
             visibility: visibility,
             state: state,
-            members: members
+            members: members,
+            ready: ready
           },
           opts
         ) do
@@ -24,7 +26,8 @@ defmodule Gateway.Group do
           "name" => name,
           "visibility" => visibility,
           "state" => state,
-          "members" => members
+          "members" => members,
+          "ready" => ready
         },
         opts
       )
@@ -44,7 +47,8 @@ defmodule Gateway.Group do
        name: state.name,
        visibility: "private",
        state: "chilling",
-       members: []
+       members: [],
+       ready: []
      }, {:continue, :setup_session}}
   end
 
@@ -109,13 +113,64 @@ defmodule Gateway.Group do
     {:noreply, state}
   end
 
+  def handle_cast({:set_group_state, new_group_state}, state) do
+    new_state = %{state | state: new_group_state}
+
+    for member <- state.members do
+      {:ok, session} = GenRegistry.lookup(Gateway.Session, member)
+      GenServer.cast(session, {:send_group_update, new_state})
+    end
+
+    {:noreply, new_state}
+  end
+
   def handle_cast({:start_group_heat}, state) do
+    new_state = %{state | state: "seshing"}
+
     for member <- state.members do
       {:ok, session} = GenRegistry.lookup(Gateway.Session, member)
       GenServer.cast(session, {:send_group_heat_start})
+      GenServer.cast(session, {:send_group_update, new_state})
     end
 
-    {:noreply, state}
+    {:noreply, new_state}
+  end
+
+  def handle_cast({:group_user_ready, session_id}, state) do
+    for member <- state.members do
+      {:ok, session} = GenRegistry.lookup(Gateway.Session, member)
+      GenServer.cast(session, {:send_group_user_ready, session_id})
+    end
+
+    ready_members = Enum.concat(state.ready, [session_id])
+
+    members_with_devices =
+      Enum.filter(state.members, fn member ->
+        {:ok, pid} = GenRegistry.lookup(Gateway.Session, member)
+        session_state = GenServer.call(pid, {:get_state})
+        session_state.device_state != %{}
+      end)
+
+    case length(ready_members) >= length(members_with_devices) do
+      true ->
+        GenServer.cast(self(), {:start_group_heat})
+        {:noreply, %{state | ready: []}}
+
+      false ->
+        {:noreply, %{state | ready: ready_members}}
+    end
+  end
+
+  def handle_cast({:inquire_group_heat, session_id}, state) do
+    new_state = %{state | state: "awaiting"}
+
+    for member <- state.members do
+      {:ok, session} = GenRegistry.lookup(Gateway.Session, member)
+      GenServer.cast(session, {:send_group_update, new_state})
+      GenServer.cast(session, {:send_group_heat_inquiry, session_id})
+    end
+
+    {:noreply, new_state}
   end
 
   def handle_cast({:join_group, session_id, session_name, session_pid}, state) do

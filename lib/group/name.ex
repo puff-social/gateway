@@ -10,11 +10,10 @@ defmodule Gateway.Group.Name do
     Fritter Herer Crack Banner Monkey Cookies Posion Cake
   )
 
-  def generate(max_id \\ 99) do
+  def generate() do
     adjective = @adjectives |> Enum.random()
     noun = @nouns |> Enum.random()
-    id = :rand.uniform(max_id)
 
-    [adjective, noun, id] |> Enum.join(" ")
+    [adjective, noun] |> Enum.join(" ")
   end
 end
