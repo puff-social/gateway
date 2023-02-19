@@ -163,6 +163,16 @@ defmodule Gateway.Session do
     {:noreply, state}
   end
 
+  def handle_cast({:send_visiblity_action, new_visibility, session_id}, state) do
+    send(
+      state.linked_socket,
+      {:send_event, :GROUP_VISIBILITY_CHANGE,
+       %{visibility: new_visibility, session_id: session_id}}
+    )
+
+    {:noreply, state}
+  end
+
   def handle_cast({:send_group_heat_start}, state) do
     send(
       state.linked_socket,
@@ -237,7 +247,7 @@ defmodule Gateway.Session do
 
       {:error, :not_found} ->
         IO.puts("Failed to locate group with that id #{group_id} (#{state.session_id})")
-        send(state.linked_socket, {:remote_close, 4001, "INVALID_GROUP_ID"})
+        send(state.linked_socket, {:send_event, :GROUP_JOIN_ERROR, %{code: "INVALID_GROUP_ID"}})
 
         {:noreply, state}
     end
@@ -289,7 +299,7 @@ defmodule Gateway.Session do
 
   def handle_cast({:edit_current_group, group_data}, state) do
     {:ok, group_pid} = GenRegistry.lookup(Gateway.Group, state.group_id)
-    GenServer.cast(group_pid, {:update_channel_state, group_data})
+    GenServer.cast(group_pid, {:update_channel_state, group_data, state.session_id})
 
     {:noreply, state}
   end
@@ -310,5 +320,32 @@ defmodule Gateway.Session do
     end
 
     {:noreply, new_state}
+  end
+
+  def handle_cast({:send_public_groups}, state) do
+    groups =
+      GenRegistry.reduce(Gateway.Group, [], fn
+        {_id, pid}, list ->
+          state = GenServer.call(pid, {:get_state})
+
+          if state.visibility == "public" do
+            [
+              %{
+                group_id: state.group_id,
+                name: state.name,
+                visibility: state.visibility,
+                state: state.state,
+                member_count: length(state.members)
+              }
+              | list
+            ]
+          else
+            list
+          end
+      end)
+
+    send(state.linked_socket, {:send_event, :PUBLIC_GROUPS_UPDATE, groups})
+
+    {:noreply, state}
   end
 end

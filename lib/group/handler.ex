@@ -71,13 +71,26 @@ defmodule Gateway.Group do
     {:noreply, state}
   end
 
-  def handle_cast({:update_channel_state, updated_state}, state) do
+  def handle_cast({:update_channel_state, updated_state, session_id}, state) do
     new_state =
       Map.merge(state, updated_state |> Map.new(fn {k, v} -> {String.to_atom(k), v} end))
 
     for member <- state.members do
       {:ok, session} = GenRegistry.lookup(Gateway.Session, member)
       GenServer.cast(session, {:send_group_update, new_state})
+
+      if state.visibility != new_state.visibility do
+        GenServer.cast(session, {:send_visiblity_action, new_state.visibility, session_id})
+      end
+    end
+
+    if state.visibility != new_state.visibility do
+      {_max_id, _max_pid} =
+        GenRegistry.reduce(Gateway.Session, {nil, -1}, fn
+          {id, pid}, {_, _current} = _acc ->
+            GenServer.cast(pid, {:send_public_groups})
+            {id, pid}
+        end)
     end
 
     {:noreply, new_state}
