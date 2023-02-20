@@ -30,10 +30,10 @@ jobs:
         uses: danielr1996/kubectl-action@1.0.0
         with:
           kubeconfig: ${{ secrets.KUBECONFIG }}
-          args: exec deployment/puffco-gateway -- /bin/sh -c 'git pull'
+          args: exec deployment/puffsocial-gateway-dev -- /bin/sh -c 'git pull'
       - uses: actions/checkout@master
       - name: Run commands on the pod
         uses: danielr1996/kubectl-action@1.0.0
         with:
           kubeconfig: ${{ secrets.KUBECONFIG }}
-          args: exec deployment/puffco-gateway -- /bin/sh -c 'iex --name recompile@${POD_IP} --cookie dstn --remsh gateway --rpc-eval gateway "IEx.Helpers.recompile\(\)" -e ":erlang.halt"'
+          args: exec deployment/puffsocial-gateway-dev -- /bin/sh -c 'iex --name recompile@${POD_IP} --cookie dstn --remsh gateway --rpc-eval gateway "IEx.Helpers.recompile\(\)" -e ":erlang.halt"'
