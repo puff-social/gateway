@@ -13,6 +13,7 @@ RUN apk add openssl git openssh
 
 RUN mix local.rebar --force \
     && mix local.hex --force \
-    && mix deps.get
+    && mix deps.get \
+    && mix compile
 
 ENTRYPOINT [ "sh", "-c", "elixir --name gateway@${POD_IP} --cookie puff.social --no-halt -S mix" ]
