@@ -40,7 +40,6 @@ defmodule Gateway.Session do
 
   def init(state) do
     Process.flag(:trap_exit, true)
-    Gateway.Metrics.Collector.inc(:gauge, :puffers_connected_sessions)
 
     {:ok,
      %__MODULE__{
@@ -67,7 +66,6 @@ defmodule Gateway.Session do
       end
     end
 
-    Gateway.Metrics.Collector.dec(:gauge, :puffers_connected_sessions)
     {:noreply, state}
   end
 
@@ -257,7 +255,7 @@ defmodule Gateway.Session do
     end
   end
 
-  def handle_cast({:leave_group}, state) when state.group_id != nil do
+  def handle_cast({:leave_group}, state) do
     case GenRegistry.lookup(Gateway.Group, state.group_id) do
       {:ok, pid} ->
         group_state = GenServer.call(pid, {:get_state})

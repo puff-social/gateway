@@ -37,6 +37,8 @@ defmodule Gateway.Socket.Handler do
     {:ok, session} =
       GenRegistry.lookup_or_start(Gateway.Session, session_id, [%{session_id: session_id}])
 
+    Gateway.Metrics.Collector.inc(:gauge, :puffers_connected_sessions)
+
     state = %__MODULE__{
       linked_session: session,
       session_id: session_id,

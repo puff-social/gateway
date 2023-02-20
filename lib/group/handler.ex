@@ -39,7 +39,6 @@ defmodule Gateway.Group do
   end
 
   def init(state) do
-    Process.flag(:trap_exit, true)
     Gateway.Metrics.Collector.inc(:gauge, :puffers_active_groups)
 
     {:ok,
