@@ -61,7 +61,10 @@ defmodule Gateway.Session do
 
     if state.group_id != nil do
       {:ok, group} = GenRegistry.lookup(Gateway.Group, state.group_id)
-      GenServer.cast(group, {:leave_group, state.session_id})
+
+      if group != nil do
+        GenServer.cast(group, {:leave_group, state.session_id})
+      end
     end
 
     Gateway.Metrics.Collector.dec(:gauge, :puffers_connected_sessions)
@@ -261,8 +264,9 @@ defmodule Gateway.Session do
 
         if Enum.member?(group_state.members, state.session_id) do
           GenServer.cast(pid, {:leave_group, state.session_id})
-          {:noreply, %{state | group_id: nil, device_state: %{}}}
         end
+
+        {:noreply, %{state | group_id: nil, device_state: %{}}}
 
       {:error, :not_found} ->
         {:noreply, %{state | group_id: nil, device_state: %{}}}
