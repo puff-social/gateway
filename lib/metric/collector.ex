@@ -11,6 +11,13 @@ defmodule Gateway.Metrics.Collector do
       help: "Number of currently connected sessions."
     )
 
+    Gauge.new(
+      name: :puffers_active_groups,
+      registry: @registry,
+      labels: [],
+      help: "Number of currently active groups."
+    )
+
     Counter.new(
       name: :puffers_messages_outbound,
       registry: @registry,

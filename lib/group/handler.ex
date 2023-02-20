@@ -40,6 +40,7 @@ defmodule Gateway.Group do
 
   def init(state) do
     Process.flag(:trap_exit, true)
+    Gateway.Metrics.Collector.inc(:gauge, :puffers_active_groups)
 
     {:ok,
      %__MODULE__{
@@ -59,6 +60,8 @@ defmodule Gateway.Group do
       {:ok, session} = GenRegistry.lookup(Gateway.Session, member)
       GenServer.cast(session, {:send_group_delete, state.group_id})
     end
+
+    Gateway.Metrics.Collector.dec(:gauge, :puffers_active_groups)
 
     {:stop, :normal, state}
   end
