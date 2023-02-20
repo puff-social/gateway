@@ -40,6 +40,7 @@ defmodule Gateway.Session do
 
   def init(state) do
     Process.flag(:trap_exit, true)
+    Gateway.Metrics.Collector.inc(:gauge, :puffers_connected_sessions)
 
     {:ok,
      %__MODULE__{
