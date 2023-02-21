@@ -281,12 +281,16 @@ defmodule Gateway.Session do
 
     group_state = GenServer.call(group_pid, {:get_state})
 
-    if group_state.state == "awaiting" and device_state["state"] == 6 do
-      GenServer.cast(group_pid, {:group_user_ready, state.session_id})
-    end
+    cond do
+      group_state.state == "awaiting" and device_state["state"] == 6 ->
+        GenServer.cast(group_pid, {:group_user_ready, state.session_id})
 
-    if group_state.state == "seshing" and device_state["state"] == 5 do
-      GenServer.cast(group_pid, {:set_group_state, "chilling"})
+      group_state.state == "seshing" and device_state["state"] == 5 and
+          (state.device_state.state == 8 or state.device_state.state == 7) ->
+        GenServer.cast(group_pid, {:set_group_state, "chilling"})
+
+      true ->
+        true
     end
 
     {:noreply,

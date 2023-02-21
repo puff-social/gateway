@@ -139,10 +139,10 @@ defmodule Gateway.Group do
     {:noreply, new_state}
   end
 
-  def handle_cast({:start_group_heat}, state) do
+  def handle_cast({:start_group_heat, members}, state) do
     new_state = %{state | state: "seshing"}
 
-    for member <- state.ready do
+    for member <- members do
       {:ok, session} = GenRegistry.lookup(Gateway.Session, member)
       GenServer.cast(session, {:send_group_heat_start})
       GenServer.cast(session, {:send_group_update, new_state})
@@ -171,7 +171,7 @@ defmodule Gateway.Group do
 
       case length(ready_members) >= length(members_with_devices) do
         true ->
-          GenServer.cast(self(), {:start_group_heat})
+          GenServer.cast(self(), {:start_group_heat, ready_members})
           {:noreply, %{state | ready: []}}
 
         false ->
