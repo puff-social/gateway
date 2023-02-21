@@ -143,7 +143,7 @@ defmodule Gateway.Session do
   def handle_cast({:send_group_user_update, group_id, session_state}, state) do
     send(
       state.linked_socket,
-      {:send_event, :GROUP_USER_UPDATED,
+      {:send_event, :GROUP_USER_UPDATE,
        %{group_id: group_id, session_id: session_state.session_id, name: session_state.name}}
     )
 

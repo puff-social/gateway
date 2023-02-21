@@ -28,6 +28,7 @@ Elixir realtime gateway that enables realtime synchronization of group sessions 
 | `GROUP_UPDATE`             | Sent to group members when group is updated                         |
 | `GROUP_USER_JOIN`          | Sent to other group members when a user joins                       |
 | `GROUP_USER_LEFT`          | Sent to other group memebrs when a user leaves                      |
+| `GROUP_USER_UPDATE`        | Sent to other group members when a users state updates              |
 | `GROUP_USER_DEVICE_UPDATE` | Sent to other group members when a users device state updates       |
 | `GROUP_JOIN_ERROR`         | Sent if OP 1 fails with a reason                                    |
 | `GROUP_CREATE_ERROR`       | Sent if OP 2 fails with a reason                                    |
