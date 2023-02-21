@@ -4,18 +4,19 @@ Elixir realtime gateway that enables realtime synchronization of group sessions 
 
 ## Opcodes
 
-| Code   | Name                | Direction |
-| ------ | ------------------- | --------- |
-| `0`    | Hello               | `S > C`   |
-| `1`    | Join Group          | `C > S`   |
-| `2`    | Create Group        | `C > S`   |
-| `3`    | Event               | `S > C`   |
-| `4`    | Send Device State   | `C > S`   |
-| `5`    | Edit Group          | `C > S`   |
-| `6`    | Update User         | `C > S`   |
-| `7`    | Leave Group         | `C > S`   |
-| `8`    | Inquire Group Heat  | `C > S`   |
-| `420`  | Heartbeat           | `C > S`   |
+| Code   | Name                     | Direction |
+| ------ | ------------------------ | --------- |
+| `0`    | Hello                    | `S > C`   |
+| `1`    | Join Group               | `C > S`   |
+| `2`    | Create Group             | `C > S`   |
+| `3`    | Event                    | `S > C`   |
+| `4`    | Send Device State        | `C > S`   |
+| `5`    | Edit Group               | `C > S`   |
+| `6`    | Update User              | `C > S`   |
+| `7`    | Leave Group              | `C > S`   |
+| `8`    | Inquire Group Heat       | `C > S`   |
+| `9`    | Start with ready members | `C > S`   |
+| `420`  | Heartbeat                | `C > S`   |
 
 ## Events (Op: 3)
 

@@ -69,9 +69,10 @@ defmodule Gateway.Group do
     if length(state.members) == 0 do
       IO.puts("Deleting group #{state.group_id}")
       Gateway.Metrics.Collector.dec(:gauge, :puffers_active_groups)
+      {:stop, :normal, state}
+    else
+      {:noreply, state}
     end
-
-    {:noreply, state}
   end
 
   def handle_call({:get_state}, _from, state) do
@@ -148,12 +149,34 @@ defmodule Gateway.Group do
     {:noreply, new_state}
   end
 
+  def handle_cast({:start_group_heat}, state) do
+    new_state = %{state | state: "seshing"}
+
+    for member <- state.ready do
+      {:ok, session} = GenRegistry.lookup(Gateway.Session, member)
+      GenServer.cast(session, {:send_group_update, new_state})
+      GenServer.cast(session, {:send_group_heat_start})
+    end
+
+    for member <- state.members do
+      {:ok, session} = GenRegistry.lookup(Gateway.Session, member)
+      GenServer.cast(session, {:send_group_update, new_state})
+    end
+
+    {:noreply, new_state}
+  end
+
   def handle_cast({:start_group_heat, members}, state) do
     new_state = %{state | state: "seshing"}
 
     for member <- members do
       {:ok, session} = GenRegistry.lookup(Gateway.Session, member)
       GenServer.cast(session, {:send_group_heat_start})
+      GenServer.cast(session, {:send_group_update, new_state})
+    end
+
+    for member <- state.members do
+      {:ok, session} = GenRegistry.lookup(Gateway.Session, member)
       GenServer.cast(session, {:send_group_update, new_state})
     end
 

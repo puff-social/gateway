@@ -193,6 +193,19 @@ defmodule Gateway.Session do
     {:noreply, state}
   end
 
+  def handle_cast({:start_with_ready}, state) when state.group_id != nil do
+    {:ok, group} = GenRegistry.lookup(Gateway.Group, state.group_id)
+    group_state = GenServer.call(group, {:get_state})
+
+    if length(group_state.ready) == 0 do
+      send(state.linked_socket, {:send_event, :GROUP_ACTION_ERROR, %{code: "NO_MEMBERS_READY"}})
+    else
+      GenServer.cast(group, {:start_group_heat})
+    end
+
+    {:noreply, state}
+  end
+
   def handle_cast({:inquire_group_heat}, state) when state.group_id != nil do
     {:ok, group} = GenRegistry.lookup(Gateway.Group, state.group_id)
     GenServer.cast(group, {:inquire_group_heat, state.session_id})

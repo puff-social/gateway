@@ -190,6 +190,10 @@ defmodule Gateway.Socket.Handler do
       8 ->
         GenServer.cast(state.linked_session, {:inquire_group_heat})
 
+      # Start with ready
+      9 ->
+        GenServer.cast(state.linked_session, {:start_with_ready})
+
       _ ->
         nil
     end
