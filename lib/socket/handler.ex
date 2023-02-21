@@ -160,8 +160,6 @@ defmodule Gateway.Socket.Handler do
 
         group_name = data["d"]["name"] || Gateway.Group.Name.generate()
 
-        IO.puts("Create group #{group_id} #{group_name}")
-
         {:ok, _pid} =
           GenRegistry.lookup_or_start(Gateway.Group, group_id, [
             %{group_id: group_id, name: group_name}
@@ -188,7 +186,7 @@ defmodule Gateway.Socket.Handler do
       7 ->
         GenServer.cast(state.linked_session, {:leave_group})
 
-      # Inqiure heating
+      # Inquire heating
       8 ->
         GenServer.cast(state.linked_session, {:inquire_group_heat})
 
