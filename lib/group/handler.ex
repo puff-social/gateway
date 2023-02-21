@@ -110,14 +110,12 @@ defmodule Gateway.Group do
 
   def handle_cast({:group_user_update, session_id, session_state}, state) do
     for member <- state.members do
-      if member !== session_id do
-        {:ok, session} = GenRegistry.lookup(Gateway.Session, member)
+      {:ok, session} = GenRegistry.lookup(Gateway.Session, member)
 
-        GenServer.cast(
-          session,
-          {:send_group_user_update, session_id, session_state}
-        )
-      end
+      GenServer.cast(
+        session,
+        {:send_group_user_update, session_id, session_state}
+      )
     end
 
     {:noreply, state}
