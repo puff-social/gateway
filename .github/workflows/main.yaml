@@ -22,7 +22,7 @@ jobs:
         with:
           context: .
           push: true
-          tags: ghcr.io/${{ github.repository }}/gateway:latest,ghcr.io/${{ github.repository }}/gateway:${{ github.sha }}
+          tags: ghcr.io/dustinrouillard/puffsocial/gateway:latest,ghcr.io/dustinrouillard/puffsocial/gateway:${{ github.sha }}
 
       # Kubernetes deployment
       - uses: actions/checkout@master
