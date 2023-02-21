@@ -30,6 +30,7 @@ Elixir realtime gateway that enables realtime synchronization of group sessions 
 | `GROUP_USER_LEFT`          | Sent to other group memebrs when a user leaves                      |
 | `GROUP_USER_DEVICE_UPDATE` | Sent to other group members when a users device state updates       |
 | `GROUP_JOIN_ERROR`         | Sent if OP 1 fails with a reason                                    |
+| `GROUP_CREATE_ERROR`       | Sent if OP 2 fails with a reason                                    |
 | `GROUP_START_HEATING`      | Sent to group members when heating cycle should begin               |
 | `GROUP_HEAT_INQUIRY`       | Sent to group members when OP 8 is sent                             |
 | `GROUP_USER_READY`         | Sent to group members when OP 4 contains a temp select state change |

@@ -160,15 +160,22 @@ defmodule Gateway.Socket.Handler do
 
         group_name = data["d"]["name"] || Gateway.Group.Name.generate()
 
-        {:ok, _pid} =
-          GenRegistry.lookup_or_start(Gateway.Group, group_id, [
-            %{group_id: group_id, name: group_name}
-          ])
+        if String.length(group_name) > 32 do
+          send(
+            self(),
+            {:send_event, :GROUP_CREATE_ERROR, %{code: "INVALID_GROUP_NAME"}}
+          )
+        else
+          {:ok, _pid} =
+            GenRegistry.lookup_or_start(Gateway.Group, group_id, [
+              %{group_id: group_id, name: group_name}
+            ])
 
-        send(
-          self(),
-          {:send_event, :GROUP_CREATE, %{group_id: group_id, name: group_name}}
-        )
+          send(
+            self(),
+            {:send_event, :GROUP_CREATE, %{group_id: group_id, name: group_name}}
+          )
+        end
 
       # Send device state
       4 ->
