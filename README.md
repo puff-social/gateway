@@ -35,4 +35,5 @@ Elixir realtime gateway that enables realtime synchronization of group sessions 
 | `GROUP_HEAT_INQUIRY`       | Sent to group members when OP 8 is sent                             |
 | `GROUP_USER_READY`         | Sent to group members when OP 4 contains a temp select state change |
 | `GROUP_VISIBILITY_CHANGE`  | Sent to group members when OP 5 contains a group visibility change  |
+| `USER_UPDATE_ERROR`        | Sent if OP 6 fails with a reason                                    |
 | `PUBLIC_GROUPS_UPDATE`     | Sent to all socket clients when a group is made public or private   |
