@@ -19,8 +19,8 @@ Elixir realtime gateway that enables realtime synchronization of group sessions 
 
 ## Events (Op: 3)
 
-| Event                    | Description                                                         |
-| ------------------------ | ------------------------------------------------------------------- |
+| Event                      | Description                                                         |
+| -------------------------- | ------------------------------------------------------------------- |
 | `JOINED_GROUP`             | Sent back once OP 1 succeeds                                        |
 | `GROUP_CREATE`             | Sent back once OP 2 succeeds                                        |
 | `GROUP_DELETE`             | Sent to group members when group deleted                            |

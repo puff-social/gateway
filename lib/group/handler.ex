@@ -65,6 +65,15 @@ defmodule Gateway.Group do
     {:stop, :normal, state}
   end
 
+  def handle_info({:check_empty_and_delete}, state) do
+    if length(state.members) == 0 do
+      IO.puts("Deleting group #{state.group_id}")
+      Gateway.Metrics.Collector.dec(:gauge, :puffers_active_groups)
+    end
+
+    {:noreply, state}
+  end
+
   def handle_call({:get_state}, _from, state) do
     {:reply, state, state}
   end
@@ -221,8 +230,11 @@ defmodule Gateway.Group do
     end
 
     if length(state.members) == 1 do
-      IO.puts("Group #{state.group_id} is now empty, deleting")
-      send(self(), {:delete})
+      IO.puts(
+        "Group #{state.group_id} is now empty, starting timeout to check and delete in 10 seconds"
+      )
+
+      Process.send_after(self(), {:check_empty_and_delete}, 10000)
     end
 
     {:noreply,
