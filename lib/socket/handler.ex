@@ -187,6 +187,15 @@ defmodule Gateway.Socket.Handler do
 
       # Update user
       6 ->
+        if data["d"]["name"] != nil and String.length(data["d"]["name"]) > 32 do
+          send(
+            self(),
+            {:send_event, :USER_UPDATE_ERROR, %{code: "INVALID_NAME"}}
+          )
+
+          :ok
+        end
+
         GenServer.cast(state.linked_session, {:update_session_state, data["d"]})
 
       # Leave group
