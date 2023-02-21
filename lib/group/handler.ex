@@ -224,14 +224,18 @@ defmodule Gateway.Group do
     {:noreply, new_state}
   end
 
-  def handle_cast({:join_group, session_id, session_name, session_pid}, state) do
+  def handle_cast({:join_group, session_id, session_name, device_type, session_pid}, state) do
     IO.puts("Session #{session_id} joined #{state.group_id}")
     GenServer.cast(session_pid, {:send_join, state})
 
     for member <- state.members do
       if member !== session_id do
         {:ok, session} = GenRegistry.lookup(Gateway.Session, member)
-        GenServer.cast(session, {:send_user_join, state.group_id, session_id, session_name})
+
+        GenServer.cast(
+          session,
+          {:send_user_join, state.group_id, session_id, session_name, device_type}
+        )
       end
     end
 

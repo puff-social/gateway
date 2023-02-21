@@ -121,11 +121,11 @@ defmodule Gateway.Session do
     {:noreply, state}
   end
 
-  def handle_cast({:send_user_join, group_id, session_id, session_name}, state) do
+  def handle_cast({:send_user_join, group_id, session_id, session_name, device_type}, state) do
     send(
       state.linked_socket,
       {:send_event, :GROUP_USER_JOIN,
-       %{group_id: group_id, session_id: session_id, name: session_name}}
+       %{group_id: group_id, session_id: session_id, name: session_name, device_type: device_type}}
     )
 
     {:noreply, state}
@@ -255,7 +255,11 @@ defmodule Gateway.Session do
           {:noreply, state}
         else
           IO.puts("Socket connection #{state.session_id} joined group #{group_id}")
-          GenServer.cast(pid, {:join_group, state.session_id, state.name, self()})
+
+          GenServer.cast(
+            pid,
+            {:join_group, state.session_id, state.name, state.device_type, self()}
+          )
 
           {:noreply, %{state | group_id: group_id}}
         end
