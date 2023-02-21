@@ -144,7 +144,12 @@ defmodule Gateway.Session do
     send(
       state.linked_socket,
       {:send_event, :GROUP_USER_UPDATE,
-       %{group_id: group_id, session_id: session_state.session_id, name: session_state.name}}
+       %{
+         group_id: group_id,
+         session_id: session_state.session_id,
+         name: session_state.name,
+         device_type: session_state.device_type
+       }}
     )
 
     {:noreply, state}
