@@ -1,4 +1,7 @@
 name: ci
+concurrency:
+  group: production
+  cancel-in-progress: true
 
 on:
   push:
