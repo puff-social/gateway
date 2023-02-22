@@ -121,6 +121,18 @@ defmodule Gateway.Group do
     {:noreply, state}
   end
 
+  def handle_cast({:group_user_device_disconnect, session_id}, state) do
+    for member <- state.members do
+      if member !== session_id do
+        {:ok, session} = GenRegistry.lookup(Gateway.Session, member)
+
+        GenServer.cast(session, {:send_group_user_device_disconnect, session_id})
+      end
+    end
+
+    {:noreply, state}
+  end
+
   def handle_cast({:group_user_device_update, session_id, device_state, device_type}, state) do
     for member <- state.members do
       if member !== session_id do

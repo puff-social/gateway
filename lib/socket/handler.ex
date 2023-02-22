@@ -210,6 +210,10 @@ defmodule Gateway.Socket.Handler do
       9 ->
         GenServer.cast(state.linked_session, {:start_with_ready})
 
+      # Disconnect device
+      10 ->
+        GenServer.cast(state.linked_session, {:disconnect_device})
+
       _ ->
         nil
     end
