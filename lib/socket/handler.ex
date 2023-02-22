@@ -151,7 +151,7 @@ defmodule Gateway.Socket.Handler do
     case data["op"] do
       # Join group
       1 ->
-        if data["d"] != nil and data["d"]["group_id"] != nil do
+        if data["d"] != nil and is_map(data["d"]) and data["d"]["group_id"] != nil do
           GenServer.cast(state.linked_session, {:join_group, data["d"]["group_id"]})
         else
           send(
@@ -186,7 +186,7 @@ defmodule Gateway.Socket.Handler do
 
       # Send device state
       4 ->
-        if data["d"] != nil do
+        if data["d"] != nil and is_map(data["d"]) do
           GenServer.cast(state.linked_session, {:update_device_state, data["d"]})
         else
           send(
@@ -197,7 +197,7 @@ defmodule Gateway.Socket.Handler do
 
       # Edit group
       5 ->
-        if data["d"] != nil do
+        if data["d"] != nil and is_map(data["d"]) do
           GenServer.cast(state.linked_session, {:edit_current_group, data["d"]})
         else
           send(
@@ -208,7 +208,7 @@ defmodule Gateway.Socket.Handler do
 
       # Update user
       6 ->
-        if data["d"] != nil do
+        if data["d"] != nil and is_map(data["d"]) do
           if data["d"]["name"] != nil and String.length(data["d"]["name"]) > 32 do
             send(
               self(),
