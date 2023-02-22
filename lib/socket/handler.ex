@@ -151,7 +151,14 @@ defmodule Gateway.Socket.Handler do
     case data["op"] do
       # Join group
       1 ->
-        GenServer.cast(state.linked_session, {:join_group, data["d"]["group_id"]})
+        if data["d"] != nil and data["d"]["group_id"] != nil do
+          GenServer.cast(state.linked_session, {:join_group, data["d"]["group_id"]})
+        else
+          send(
+            self(),
+            {:send_event, :SYNTAX_ERROR, %{code: "MISSING_DATA_OR_GROUP_ID"}}
+          )
+        end
 
       # Create group
       2 ->
@@ -179,24 +186,45 @@ defmodule Gateway.Socket.Handler do
 
       # Send device state
       4 ->
-        GenServer.cast(state.linked_session, {:update_device_state, data["d"]})
+        if data["d"] != nil do
+          GenServer.cast(state.linked_session, {:update_device_state, data["d"]})
+        else
+          send(
+            self(),
+            {:send_event, :SYNTAX_ERROR, %{code: "MISSING_DATA"}}
+          )
+        end
 
       # Edit group
       5 ->
-        GenServer.cast(state.linked_session, {:edit_current_group, data["d"]})
+        if data["d"] != nil do
+          GenServer.cast(state.linked_session, {:edit_current_group, data["d"]})
+        else
+          send(
+            self(),
+            {:send_event, :SYNTAX_ERROR, %{code: "MISSING_DATA"}}
+          )
+        end
 
       # Update user
       6 ->
-        if data["d"]["name"] != nil and String.length(data["d"]["name"]) > 32 do
+        if data["d"] != nil do
+          if data["d"]["name"] != nil and String.length(data["d"]["name"]) > 32 do
+            send(
+              self(),
+              {:send_event, :USER_UPDATE_ERROR, %{code: "INVALID_NAME"}}
+            )
+
+            :ok
+          end
+
+          GenServer.cast(state.linked_session, {:update_session_state, data["d"]})
+        else
           send(
             self(),
-            {:send_event, :USER_UPDATE_ERROR, %{code: "INVALID_NAME"}}
+            {:send_event, :SYNTAX_ERROR, %{code: "MISSING_DATA"}}
           )
-
-          :ok
         end
-
-        GenServer.cast(state.linked_session, {:update_session_state, data["d"]})
 
       # Leave group
       7 ->
