@@ -140,6 +140,15 @@ defmodule Gateway.Session do
     {:noreply, state}
   end
 
+  def handle_cast({:send_group_user_unready, session_id}, state) do
+    send(
+      state.linked_socket,
+      {:send_event, :GROUP_USER_UNREADY, %{session_id: session_id}}
+    )
+
+    {:noreply, state}
+  end
+
   def handle_cast({:send_group_user_update, group_id, session_state}, state) do
     send(
       state.linked_socket,
@@ -214,11 +223,11 @@ defmodule Gateway.Session do
   def handle_cast({:disconnect_device}, state) do
     if state.group_id != nil do
       {:ok, group} = GenRegistry.lookup(Gateway.Group, state.group_id)
-
       GenServer.cast(group, {:group_user_device_disconnect, state.session_id})
+      {:noreply, %{state | device_state: %{}}}
+    else
+      {:noreply, state}
     end
-
-    {:noreply, state}
   end
 
   def handle_cast({:start_with_ready}, state) do

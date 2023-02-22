@@ -126,6 +126,10 @@ defmodule Gateway.Group do
       if member !== session_id do
         {:ok, session} = GenRegistry.lookup(Gateway.Session, member)
 
+        if Enum.member?(state.ready, session_id) do
+          GenServer.cast(self(), {:group_user_unready, session_id})
+        end
+
         GenServer.cast(session, {:send_group_user_device_disconnect, session_id})
       end
     end
@@ -219,6 +223,20 @@ defmodule Gateway.Group do
         false ->
           {:noreply, %{state | ready: ready_members}}
       end
+    end
+  end
+
+  def handle_cast({:group_user_unready, session_id}, state) do
+    for member <- state.members do
+      {:ok, session} = GenRegistry.lookup(Gateway.Session, member)
+      GenServer.cast(session, {:send_group_user_unready, session_id})
+    end
+
+    if Enum.member?(state.ready, session_id) do
+      {:noreply,
+       %{state | ready: Enum.filter(state.ready, fn member -> member !== session_id end)}}
+    else
+      {:noreply, state}
     end
   end
 
