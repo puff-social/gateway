@@ -17,16 +17,19 @@ defmodule Gateway.Router.V1 do
     list =
       GenRegistry.reduce(Gateway.Group, [], fn
         {_id, pid}, list ->
-          state = GenServer.call(pid, {:get_state})
+          group_state = GenServer.call(pid, {:get_state})
+          group_members = GenServer.call(pid, {:get_members})
 
-          if state.visibility == "public" do
+          if group_state.visibility == "public" do
             [
               %{
-                group_id: state.group_id,
-                name: state.name,
-                visibility: state.visibility,
-                state: state.state,
-                member_count: length(state.members)
+                group_id: group_state.group_id,
+                name: group_state.name,
+                visibility: group_state.visibility,
+                state: group_state.state,
+                member_count: length(group_state.members),
+                watcher_count: length(group_members.watchers),
+                sesher_count: length(group_members.seshers)
               }
               | list
             ]
@@ -42,6 +45,7 @@ defmodule Gateway.Router.V1 do
     case GenRegistry.lookup(Gateway.Group, id) do
       {:ok, pid} ->
         group_state = GenServer.call(pid, {:get_state})
+        group_members = GenServer.call(pid, {:get_members})
 
         Util.respond(
           conn,
@@ -51,7 +55,9 @@ defmodule Gateway.Router.V1 do
              name: group_state.name,
              visibility: group_state.visibility,
              state: group_state.state,
-             member_count: length(group_state.members)
+             member_count: length(group_state.members),
+             watcher_count: length(group_members.watchers),
+             sesher_count: length(group_members.seshers)
            }}
         )
 

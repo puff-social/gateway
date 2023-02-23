@@ -79,6 +79,28 @@ defmodule Gateway.Group do
     {:reply, state, state}
   end
 
+  def handle_call({:get_members}, _from, state) do
+    members_with_devices =
+      Enum.filter(state.members, fn member ->
+        {:ok, pid} = GenRegistry.lookup(Gateway.Session, member)
+        session_state = GenServer.call(pid, {:get_state})
+        session_state.device_state != %{}
+      end)
+
+    members_without_devices =
+      Enum.filter(state.members, fn member ->
+        {:ok, pid} = GenRegistry.lookup(Gateway.Session, member)
+        session_state = GenServer.call(pid, {:get_state})
+        session_state.device_state == %{}
+      end)
+
+    {:reply,
+     %{
+       seshers: members_with_devices,
+       watchers: members_without_devices
+     }, state}
+  end
+
   def handle_continue(:setup_session, state) do
     {:noreply, state}
   end
