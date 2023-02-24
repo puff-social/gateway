@@ -105,7 +105,11 @@ defmodule Gateway.Group do
      }, state}
   end
 
-  def handle_cast({:increment_sesh_counter}, _from, state) do
+  def handle_continue(:setup_session, state) do
+    {:noreply, state}
+  end
+
+  def handle_cast({:increment_sesh_counter}, state) do
     new_state = %{state | sesh_counter: state.sesh_counter + 1}
 
     for member <- state.members do
@@ -114,10 +118,6 @@ defmodule Gateway.Group do
     end
 
     {:noreply, new_state}
-  end
-
-  def handle_continue(:setup_session, state) do
-    {:noreply, state}
   end
 
   def handle_cast({:update_channel_state, updated_state, session_id}, state) do
