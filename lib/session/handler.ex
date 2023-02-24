@@ -97,6 +97,7 @@ defmodule Gateway.Session do
          group_id: group_state.group_id,
          visibility: group_state.visibility,
          state: group_state.state,
+         sesh_counter: group_state.sesh_counter,
          members:
            Enum.reduce(group_state.members, [], fn id, acc ->
              {:ok, pid} = GenRegistry.lookup(Gateway.Session, id)
@@ -393,7 +394,8 @@ defmodule Gateway.Session do
                 name: state.name,
                 visibility: state.visibility,
                 state: state.state,
-                member_count: length(state.members)
+                member_count: length(state.members),
+                sesh_counter: state.sesh_counter
               }
               | list
             ]
