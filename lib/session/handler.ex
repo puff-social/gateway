@@ -337,7 +337,7 @@ defmodule Gateway.Session do
 
       group_state.state == "seshing" and device_state["state"] == 5 and
           (state.device_state.state == 8 or state.device_state.state == 7) ->
-        GenServer.call(group_pid, {:increment_sesh_counter})
+        GenServer.cast(group_pid, {:increment_sesh_counter})
         GenServer.cast(group_pid, {:set_group_state, "chilling"})
 
       true ->

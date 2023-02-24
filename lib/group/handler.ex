@@ -105,10 +105,13 @@ defmodule Gateway.Group do
      }, state}
   end
 
-  def handle_call({:increment_sesh_counter}, _from, state) do
+  def handle_cast({:increment_sesh_counter}, _from, state) do
     new_state = %{state | sesh_counter: state.sesh_counter + 1}
 
-    GenServer.cast(self(), {:update_channel_state, new_state, state.session_id})
+    for member <- state.members do
+      {:ok, session} = GenRegistry.lookup(Gateway.Session, member)
+      GenServer.cast(session, {:send_group_update, new_state})
+    end
 
     {:noreply, new_state}
   end
