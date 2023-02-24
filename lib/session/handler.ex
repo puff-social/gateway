@@ -1,11 +1,14 @@
 defmodule Gateway.Session do
   use GenServer
 
+  alias Gateway.Session.Token
+
   defstruct session_id: nil,
             name: nil,
             linked_socket: nil,
             group_id: nil,
-            device_state: nil
+            device_state: nil,
+            session_token: nil
 
   defimpl Jason.Encoder do
     def encode(
@@ -14,7 +17,8 @@ defmodule Gateway.Session do
             name: name,
             linked_socket: linked_socket,
             group_id: group_id,
-            device_state: device_state
+            device_state: device_state,
+            session_token: session_token
           },
           opts
         ) do
@@ -24,7 +28,8 @@ defmodule Gateway.Session do
           "name" => name,
           "linked_socket" => linked_socket,
           "group_id" => group_id,
-          "device_state" => device_state
+          "device_state" => device_state,
+          "session_token" => session_token
         },
         opts
       )
@@ -38,13 +43,16 @@ defmodule Gateway.Session do
   def init(state) do
     Process.flag(:trap_exit, true)
 
+    session_token = Token.generate()
+
     {:ok,
      %__MODULE__{
        session_id: state.session_id,
        name: "Unnamed",
        linked_socket: nil,
        group_id: nil,
-       device_state: %{}
+       device_state: %{},
+       session_token: session_token
      }, {:continue, :setup_session}}
   end
 
@@ -79,7 +87,15 @@ defmodule Gateway.Session do
   end
 
   def handle_info({:send_init, socket}, state) when is_pid(socket) do
-    send(socket, {:send_op, 0, %{session_id: state.session_id, heartbeat_interval: 25000}})
+    send(
+      socket,
+      {:send_op, 0,
+       %{
+         session_id: state.session_id,
+         session_token: state.session_token,
+         heartbeat_interval: 25000
+       }}
+    )
 
     {:noreply, state}
   end
@@ -174,6 +190,20 @@ defmodule Gateway.Session do
     {:noreply, state}
   end
 
+  def handle_cast({:send_group_user_message, author_session_id, message_data}, state) do
+    send(
+      state.linked_socket,
+      {:send_event, :GROUP_MESSAGE,
+       %{
+         group_id: state.group_id,
+         author_session_id: author_session_id,
+         message: message_data
+       }}
+    )
+
+    {:noreply, state}
+  end
+
   def handle_cast({:send_group_user_device_disconnect, session_id}, state) do
     send(
       state.linked_socket,
@@ -225,6 +255,15 @@ defmodule Gateway.Session do
     end
   end
 
+  def handle_cast({:send_message_to_group, message_data}, state) do
+    if state.group_id != nil do
+      {:ok, group} = GenRegistry.lookup(Gateway.Group, state.group_id)
+      GenServer.cast(group, {:broadcast_user_message, message_data, state.session_id})
+    end
+
+    {:noreply, state}
+  end
+
   def handle_cast({:start_with_ready}, state) do
     if state.group_id != nil do
       {:ok, group} = GenRegistry.lookup(Gateway.Group, state.group_id)
@@ -243,6 +282,13 @@ defmodule Gateway.Session do
   def handle_cast({:inquire_group_heat}, state) do
     {:ok, group} = GenRegistry.lookup(Gateway.Group, state.group_id)
     GenServer.cast(group, {:inquire_group_heat, state.session_id})
+
+    {:noreply, state}
+  end
+
+  def handle_cast({:stop_group_heat}, state) do
+    {:ok, group} = GenRegistry.lookup(Gateway.Group, state.group_id)
+    GenServer.cast(group, {:stop_group_heat, state.session_id})
 
     {:noreply, state}
   end

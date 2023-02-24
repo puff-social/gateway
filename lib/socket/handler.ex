@@ -1,6 +1,8 @@
 defmodule Gateway.Socket.Handler do
   @behaviour :cowboy_websocket
 
+  alias Gateway.Group.Generator
+
   @type t :: %{
           session_id: nil,
           linked_session: pid,
@@ -162,10 +164,9 @@ defmodule Gateway.Socket.Handler do
 
       # Create group
       2 ->
-        group_id =
-          for _ <- 1..6, into: "", do: <<Enum.random('0123456789abcdefghijklmnopqrstuvwxyz')>>
+        group_id = Generator.generateId()
 
-        group_name = data["d"]["name"] || Gateway.Group.Name.generate()
+        group_name = data["d"]["name"] || Generator.generateName()
 
         if String.length(group_name) > 32 do
           send(
@@ -241,6 +242,21 @@ defmodule Gateway.Socket.Handler do
       # Disconnect device
       10 ->
         GenServer.cast(state.linked_session, {:disconnect_device})
+
+      # Send message to group
+      11 ->
+        if data["d"] != nil and is_map(data["d"]) do
+          GenServer.cast(state.linked_session, {:send_message_to_group, data["d"]})
+        else
+          send(
+            self(),
+            {:send_event, :SYNTAX_ERROR, %{code: "MISSING_DATA"}}
+          )
+        end
+
+      # Set group back to chilling (stop sesh)
+      12 ->
+        GenServer.cast(state.linked_session, {:stop_group_heat})
 
       _ ->
         nil
