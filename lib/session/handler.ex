@@ -5,8 +5,7 @@ defmodule Gateway.Session do
             name: nil,
             linked_socket: nil,
             group_id: nil,
-            device_state: nil,
-            device_type: nil
+            device_state: nil
 
   defimpl Jason.Encoder do
     def encode(
@@ -15,8 +14,7 @@ defmodule Gateway.Session do
             name: name,
             linked_socket: linked_socket,
             group_id: group_id,
-            device_state: device_state,
-            device_type: device_type
+            device_state: device_state
           },
           opts
         ) do
@@ -26,8 +24,7 @@ defmodule Gateway.Session do
           "name" => name,
           "linked_socket" => linked_socket,
           "group_id" => group_id,
-          "device_state" => device_state,
-          "device_type" => device_type
+          "device_state" => device_state
         },
         opts
       )
@@ -109,8 +106,7 @@ defmodule Gateway.Session do
                %{
                  name: session_state.name,
                  session_id: session_state.session_id,
-                 device_state: session_state.device_state,
-                 device_type: session_state.device_type
+                 device_state: session_state.device_state
                }
                | acc
              ]
@@ -121,11 +117,11 @@ defmodule Gateway.Session do
     {:noreply, state}
   end
 
-  def handle_cast({:send_user_join, group_id, session_id, session_name, device_type}, state) do
+  def handle_cast({:send_user_join, group_id, session_id, session_name}, state) do
     send(
       state.linked_socket,
       {:send_event, :GROUP_USER_JOIN,
-       %{group_id: group_id, session_id: session_id, name: session_name, device_type: device_type}}
+       %{group_id: group_id, session_id: session_id, name: session_name}}
     )
 
     {:noreply, state}
@@ -156,23 +152,21 @@ defmodule Gateway.Session do
        %{
          group_id: group_id,
          session_id: session_state.session_id,
-         name: session_state.name,
-         device_type: session_state.device_type
+         name: session_state.name
        }}
     )
 
     {:noreply, state}
   end
 
-  def handle_cast({:send_group_user_device_update, session_id, device_state, device_type}, state) do
+  def handle_cast({:send_group_user_device_update, session_id, device_state}, state) do
     send(
       state.linked_socket,
       {:send_event, :GROUP_USER_DEVICE_UPDATE,
        %{
          group_id: state.group_id,
          session_id: session_id,
-         device_state: device_state,
-         device_type: device_type
+         device_state: device_state
        }}
     )
 
@@ -297,7 +291,7 @@ defmodule Gateway.Session do
 
           GenServer.cast(
             pid,
-            {:join_group, state.session_id, state.name, state.device_type, self()}
+            {:join_group, state.session_id, state.name, self()}
           )
 
           {:noreply, %{state | group_id: group_id}}
@@ -332,7 +326,7 @@ defmodule Gateway.Session do
 
     GenServer.cast(
       group_pid,
-      {:group_user_device_update, state.session_id, device_state, state.device_type}
+      {:group_user_device_update, state.session_id, device_state}
     )
 
     group_state = GenServer.call(group_pid, {:get_state})

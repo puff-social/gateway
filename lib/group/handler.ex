@@ -159,14 +159,14 @@ defmodule Gateway.Group do
     {:noreply, state}
   end
 
-  def handle_cast({:group_user_device_update, session_id, device_state, device_type}, state) do
+  def handle_cast({:group_user_device_update, session_id, device_state}, state) do
     for member <- state.members do
       if member !== session_id do
         {:ok, session} = GenRegistry.lookup(Gateway.Session, member)
 
         GenServer.cast(
           session,
-          {:send_group_user_device_update, session_id, device_state, device_type}
+          {:send_group_user_device_update, session_id, device_state}
         )
       end
     end
@@ -274,7 +274,7 @@ defmodule Gateway.Group do
     {:noreply, new_state}
   end
 
-  def handle_cast({:join_group, session_id, session_name, device_type, session_pid}, state) do
+  def handle_cast({:join_group, session_id, session_name, session_pid}, state) do
     IO.puts("Session #{session_id} joined #{state.group_id}")
     GenServer.cast(session_pid, {:send_join, state})
 
@@ -284,7 +284,7 @@ defmodule Gateway.Group do
 
         GenServer.cast(
           session,
-          {:send_user_join, state.group_id, session_id, session_name, device_type}
+          {:send_user_join, state.group_id, session_id, session_name}
         )
       end
     end
