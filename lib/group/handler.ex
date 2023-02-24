@@ -334,6 +334,10 @@ defmodule Gateway.Group do
   def handle_cast({:leave_group, session_id}, state) do
     IO.puts("Session #{session_id} left #{state.group_id}")
 
+    if Enum.member?(state.ready, session_id) do
+      GenServer.cast(self(), {:group_user_unready, session_id})
+    end
+
     for member <- state.members do
       if member !== session_id do
         {:ok, session} = GenRegistry.lookup(Gateway.Session, member)
