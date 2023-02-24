@@ -5,6 +5,7 @@ defmodule Gateway.Group do
             name: nil,
             visibility: nil,
             state: nil,
+            sesh_counter: nil,
             members: [],
             ready: []
 
@@ -15,6 +16,7 @@ defmodule Gateway.Group do
             name: name,
             visibility: visibility,
             state: state,
+            sesh_counter: sesh_counter,
             members: members,
             ready: ready
           },
@@ -26,6 +28,7 @@ defmodule Gateway.Group do
           "name" => name,
           "visibility" => visibility,
           "state" => state,
+          "sesh_counter" => sesh_counter,
           "members" => members,
           "ready" => ready
         },
@@ -47,6 +50,7 @@ defmodule Gateway.Group do
        name: state.name,
        visibility: "private",
        state: "chilling",
+       sesh_counter: 0,
        members: [],
        ready: []
      }, {:continue, :setup_session}}
@@ -99,6 +103,17 @@ defmodule Gateway.Group do
        seshers: members_with_devices,
        watchers: members_without_devices
      }, state}
+  end
+
+  def handle_call({:increment_sesh_counter}, _from, state) do
+    new_state = %{state | sesh_counter: state.sesh_counter + 1}
+
+    for member <- state.members do
+      {:ok, session} = GenRegistry.lookup(Gateway.Session, member)
+      GenServer.cast(session, {:send_group_update, new_state})
+    end
+
+    {:noreply, new_state}
   end
 
   def handle_continue(:setup_session, state) do
