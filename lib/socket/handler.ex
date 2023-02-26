@@ -76,6 +76,14 @@ defmodule Gateway.Socket.Handler do
     end
   end
 
+  def websocket_info({:set_new_session, session_pid}, state) do
+    {:ok,
+     %{
+       state
+       | linked_session: session_pid
+     }}
+  end
+
   def websocket_info({:send_event, event, data}, state) do
     send(
       self(),
@@ -141,11 +149,12 @@ defmodule Gateway.Socket.Handler do
   end
 
   def terminate(_reason, _req, state) do
-    Process.exit(state.linked_session, :normal)
-    GenRegistry.stop(Gateway.Session, state.session_id)
+    Process.send_after(state.linked_session, {:close_session_if_socket_dead}, 15000)
     Gateway.Metrics.Collector.dec(:gauge, :puffers_connected_sessions)
     :ok
   end
+
+  def handle_info({:EXIT, _pid, _reason}, state), do: {:noreply, state}
 
   defp handle_message(data, state) do
     Gateway.Metrics.Collector.inc(:counter, :puffers_messages_inbound)
@@ -165,25 +174,13 @@ defmodule Gateway.Socket.Handler do
       # Create group
       2 ->
         group_id = Generator.generateId()
-
         group_name = data["d"]["name"] || Generator.generateName()
+        group_visibility = data["d"]["visibility"] || "private"
 
-        if String.length(group_name) > 32 do
-          send(
-            self(),
-            {:send_event, :GROUP_CREATE_ERROR, %{code: "INVALID_GROUP_NAME"}}
-          )
-        else
-          {:ok, _pid} =
-            GenRegistry.lookup_or_start(Gateway.Group, group_id, [
-              %{group_id: group_id, name: group_name}
-            ])
-
-          send(
-            self(),
-            {:send_event, :GROUP_CREATE, %{group_id: group_id, name: group_name}}
-          )
-        end
+        GenServer.cast(
+          state.linked_session,
+          {:create_group, group_id, group_name, group_visibility}
+        )
 
       # Send device state
       4 ->
@@ -257,6 +254,41 @@ defmodule Gateway.Socket.Handler do
       # Set group back to chilling (stop sesh)
       12 ->
         GenServer.cast(state.linked_session, {:stop_group_heat})
+
+      # Resume session
+      13 ->
+        if data["d"] != nil and is_map(data["d"]) do
+          case GenRegistry.lookup(Gateway.Session, data["d"]["session_id"]) do
+            {:ok, session_pid} ->
+              if session_pid != nil do
+                session_state = GenServer.call(session_pid, {:get_state})
+
+                if session_state.session_token == data["d"]["session_token"] do
+                  GenServer.cast(session_pid, {:link_socket_without_init, self()})
+
+                  send(
+                    self(),
+                    {:send_event, :SESSION_RESUMED, %{session_id: session_state.session_id}}
+                  )
+
+                  send(self(), {:set_new_session, session_pid})
+                  GenServer.stop(state.linked_session, :normal)
+                else
+                  {:reply, {:close, 4001, "INVALID_RESUME_SESSION"}, state}
+                end
+              else
+                {:reply, {:close, 4001, "INVALID_RESUME_SESSION"}, state}
+              end
+
+            {:error, :not_found} ->
+              {:reply, {:close, 4001, "INVALID_RESUME_SESSION"}, state}
+          end
+        else
+          send(
+            self(),
+            {:send_event, :SYNTAX_ERROR, %{code: "MISSING_DATA"}}
+          )
+        end
 
       _ ->
         nil

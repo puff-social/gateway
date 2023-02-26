@@ -28,7 +28,9 @@ defmodule Gateway.MixProject do
        git: "https://github.com/lanodan/prometheus.ex", branch: "fix/elixir-1.14", override: true},
       {:redix, "~> 1.1"},
       {:uuid, "~> 1.1"},
+      {:sentry, "~> 8.0"},
       {:jason, "~> 1.2"},
+      {:hackney, "~> 1.8"},
       {:amqp, "~> 2.1"}
     ]
   end
