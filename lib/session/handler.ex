@@ -69,10 +69,14 @@ defmodule Gateway.Session do
       {:noreply, state}
     else
       if state.group_id != nil do
-        {:ok, group} = GenRegistry.lookup(Gateway.Group, state.group_id)
+        case GenRegistry.lookup(Gateway.Group, state.group_id) do
+          {:ok, group} ->
+            if group != nil do
+              GenServer.cast(group, {:leave_group, state.session_id})
+            end
 
-        if group != nil do
-          GenServer.cast(group, {:leave_group, state.session_id})
+          {:error, :not_found} ->
+            {:stop, :normal, state}
         end
       end
 
