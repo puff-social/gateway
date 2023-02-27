@@ -81,6 +81,15 @@ defmodule Gateway.Group do
   def handle_info({:check_empty_and_delete}, state) do
     if length(state.members) == 0 do
       Gateway.Metrics.Collector.dec(:gauge, :puffers_active_groups)
+
+      if state.visibility == "public" do
+        GenRegistry.reduce(Gateway.Session, {nil, -1}, fn
+          {id, pid}, {_, _current} = _acc ->
+            GenServer.cast(pid, {:send_public_groups})
+            {id, pid}
+        end)
+      end
+
       {:stop, :normal, state}
     else
       {:noreply, state}
