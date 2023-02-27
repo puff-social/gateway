@@ -395,6 +395,14 @@ defmodule Gateway.Session do
            owner_session_id: state.session_id
          }}
       )
+
+      if group_visibility == "public" do
+        GenRegistry.reduce(Gateway.Session, {nil, -1}, fn
+          {id, pid}, {_, _current} = _acc ->
+            GenServer.cast(pid, {:send_public_groups})
+            {id, pid}
+        end)
+      end
     end
 
     {:noreply, state}
