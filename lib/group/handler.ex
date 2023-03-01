@@ -483,7 +483,7 @@ defmodule Gateway.Group do
   end
 
   def handle_cast({:stop_group_heat, _session_id}, state) do
-    new_state = %{state | state: "chilling"}
+    new_state = %{state | state: "chilling", ready: []}
 
     for member <- state.members do
       case GenRegistry.lookup(Gateway.Session, member) do
