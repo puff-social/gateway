@@ -301,13 +301,13 @@ defmodule Gateway.Group do
   end
 
   def handle_cast({:start_group_heat}, state) do
-    new_state = %{state | state: "seshing"}
+    new_state = %{state | state: "seshing", ready: []}
 
     for member <- state.ready do
       case GenRegistry.lookup(Gateway.Session, member) do
         {:ok, pid} ->
-          GenServer.cast(pid, {:send_group_update, new_state})
           GenServer.cast(pid, {:send_group_heat_start})
+          GenServer.cast(pid, {:send_group_update, new_state})
 
         {:error, :not_found} ->
           nil
