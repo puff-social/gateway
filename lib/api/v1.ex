@@ -27,7 +27,7 @@ defmodule Gateway.Router.V1 do
                 name: group_state.name,
                 visibility: group_state.visibility,
                 state: group_state.state,
-                sesh_counter: length(group_state.sesh_counter),
+                sesh_counter: group_state.sesh_counter,
                 member_count: length(group_state.members),
                 watcher_count: length(group_members.watchers),
                 sesher_count: length(group_members.seshers)
@@ -56,7 +56,7 @@ defmodule Gateway.Router.V1 do
              name: group_state.name,
              visibility: group_state.visibility,
              state: group_state.state,
-             sesh_counter: length(group_state.sesh_counter),
+             sesh_counter: group_state.sesh_counter,
              member_count: length(group_state.members),
              watcher_count: length(group_members.watchers),
              sesher_count: length(group_members.seshers)
