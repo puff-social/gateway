@@ -174,7 +174,19 @@ defmodule Gateway.Socket.Handler do
       # Create group
       2 ->
         group_id = Generator.generateId()
-        group_name = data["d"]["name"] || Generator.generateName()
+
+        group_name =
+          case data["d"]["name"] do
+            nil ->
+              Generator.generateName()
+
+            "" ->
+              Generator.generateName()
+
+            _ ->
+              data["d"]["name"]
+          end
+
         group_visibility = data["d"]["visibility"] || "private"
 
         GenServer.cast(
