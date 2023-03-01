@@ -341,16 +341,6 @@ defmodule Gateway.Group do
       end
     end
 
-    for member <- state.members do
-      case GenRegistry.lookup(Gateway.Session, member) do
-        {:ok, pid} ->
-          GenServer.cast(pid, {:send_group_update, new_state})
-
-        {:error, :not_found} ->
-          nil
-      end
-    end
-
     {:noreply, new_state}
   end
 
