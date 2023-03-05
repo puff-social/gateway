@@ -212,7 +212,16 @@ defmodule Gateway.Socket.Handler do
       # Edit group
       5 ->
         if data["d"] != nil and is_map(data["d"]) do
-          GenServer.cast(state.linked_session, {:edit_current_group, data["d"]})
+          case Hammer.check_rate("group_edit:#{state.session_id}", 10_000, 10) do
+            {:allow, _count} ->
+              GenServer.cast(state.linked_session, {:edit_current_group, data["d"]})
+
+            {:deny, _limit} ->
+              send(
+                self(),
+                {:send_event, :RATE_LIMITED}
+              )
+          end
         else
           send(
             self(),
@@ -232,7 +241,16 @@ defmodule Gateway.Socket.Handler do
             :ok
           end
 
-          GenServer.cast(state.linked_session, {:update_session_state, data["d"]})
+          case Hammer.check_rate("user_update:#{state.session_id}", 30_000, 5) do
+            {:allow, _count} ->
+              GenServer.cast(state.linked_session, {:update_session_state, data["d"]})
+
+            {:deny, _limit} ->
+              send(
+                self(),
+                {:send_event, :RATE_LIMITED}
+              )
+          end
         else
           send(
             self(),
@@ -259,7 +277,16 @@ defmodule Gateway.Socket.Handler do
       # Send message to group
       11 ->
         if data["d"] != nil and is_map(data["d"]) do
-          GenServer.cast(state.linked_session, {:send_message_to_group, data["d"]})
+          case Hammer.check_rate("send_message:#{state.session_id}", 10_000, 10) do
+            {:allow, _count} ->
+              GenServer.cast(state.linked_session, {:send_message_to_group, data["d"]})
+
+            {:deny, _limit} ->
+              send(
+                self(),
+                {:send_event, :RATE_LIMITED}
+              )
+          end
         else
           send(
             self(),
