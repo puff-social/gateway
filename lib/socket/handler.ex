@@ -313,7 +313,7 @@ defmodule Gateway.Socket.Handler do
                ["👍", "✌️", "👋", "🤙", "😂", "😮‍💨", "🤬", "🤯", "🫠", "🫡", "💨", "🚬"],
                data["d"]["emoji"]
              ) do
-            case Hammer.check_rate("send_reaction:#{}", 10_000, 10) do
+            case Hammer.check_rate("send_reaction:#{state.session_id}", 10_000, 10) do
               {:allow, _count} ->
                 GenServer.cast(
                   state.linked_session,
