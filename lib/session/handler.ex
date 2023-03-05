@@ -128,6 +128,7 @@ defmodule Gateway.Session do
          visibility: group_state.visibility,
          state: group_state.state,
          sesh_counter: group_state.sesh_counter,
+         owner_session_id: group_state.owner_session_id,
          members:
            Enum.reduce(group_state.members, [], fn id, acc ->
              case GenRegistry.lookup(Gateway.Session, id) do
@@ -519,7 +520,13 @@ defmodule Gateway.Session do
 
   def handle_cast({:edit_current_group, group_data}, state) do
     {:ok, group_pid} = GenRegistry.lookup(Gateway.Group, state.group_id)
-    GenServer.cast(group_pid, {:update_channel_state, group_data, state.session_id})
+    group_state = :sys.get_state(group_pid)
+
+    if group_state.owner_session_id != state.session_id do
+      send(state.linked_socket, {:send_event, :GROUP_ACTION_ERROR, %{code: "NOT_OWNER"}})
+    else
+      GenServer.cast(group_pid, {:update_channel_state, group_data, state.session_id})
+    end
 
     {:noreply, state}
   end

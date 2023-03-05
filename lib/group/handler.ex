@@ -513,15 +513,22 @@ defmodule Gateway.Group do
   end
 
   def handle_cast({:join_group, session_id, session_name, session_pid}, state) do
-    GenServer.cast(session_pid, {:send_join, state})
+    new_state =
+      if length(state.members) == 0 do
+        %{state | owner_session_id: session_id}
+      else
+        state
+      end
 
-    for member <- state.members do
+    GenServer.cast(session_pid, {:send_join, new_state})
+
+    for member <- new_state.members do
       if member !== session_id do
         case GenRegistry.lookup(Gateway.Session, member) do
           {:ok, pid} ->
             GenServer.cast(
               pid,
-              {:send_user_join, state.group_id, session_id, session_name}
+              {:send_user_join, new_state.group_id, session_id, session_name}
             )
 
           {:error, :not_found} ->
@@ -532,8 +539,8 @@ defmodule Gateway.Group do
 
     {:noreply,
      %{
-       state
-       | members: Enum.concat(state.members, [session_id])
+       new_state
+       | members: Enum.concat(new_state.members, [session_id])
      }}
   end
 
@@ -554,14 +561,34 @@ defmodule Gateway.Group do
       end
     end
 
-    if length(state.members) == 1 do
+    new_members = Enum.filter(state.members, fn member -> member !== session_id end)
+
+    new_state =
+      if session_id == state.owner_session_id and length(new_members) != 0 do
+        new_owner = Enum.at(new_members, 0)
+
+        for member <- state.members do
+          case GenRegistry.lookup(Gateway.Session, member) do
+            {:ok, pid} ->
+              GenServer.cast(
+                pid,
+                {:send_group_update, %{state | members: new_members, owner_session_id: new_owner}}
+              )
+
+            {:error, :not_found} ->
+              nil
+          end
+        end
+
+        %{state | members: new_members, owner_session_id: new_owner}
+      else
+        %{state | members: new_members}
+      end
+
+    if length(new_members) == 0 do
       Process.send_after(self(), {:check_empty_and_delete}, 30000)
     end
 
-    {:noreply,
-     %{
-       state
-       | members: Enum.filter(state.members, fn member -> member !== session_id end)
-     }}
+    {:noreply, new_state}
   end
 end
