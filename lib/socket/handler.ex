@@ -76,11 +76,12 @@ defmodule Gateway.Socket.Handler do
     end
   end
 
-  def websocket_info({:set_new_session, session_pid}, state) do
+  def websocket_info({:set_new_session, session_pid, session_id}, state) do
     {:ok,
      %{
        state
-       | linked_session: session_pid
+       | linked_session: session_pid,
+         session_id: session_id
      }}
   end
 
@@ -180,11 +181,14 @@ defmodule Gateway.Socket.Handler do
             nil ->
               Generator.generateName()
 
-            "" ->
-              Generator.generateName()
-
             _ ->
-              data["d"]["name"]
+              if String.trim(data["d"]["name"]) == "" or
+                   String.normalize(data["d"]["name"], :nfc) !=
+                     String.normalize(data["d"]["name"], :nfd) do
+                Generator.generateName()
+              else
+                data["d"]["name"]
+              end
           end
 
         group_visibility = data["d"]["visibility"] || "private"
@@ -283,7 +287,7 @@ defmodule Gateway.Socket.Handler do
                     {:send_event, :SESSION_RESUMED, %{session_id: session_state.session_id}}
                   )
 
-                  send(self(), {:set_new_session, session_pid})
+                  send(self(), {:set_new_session, session_pid, session_state.session_id})
                   GenServer.stop(state.linked_session, :normal)
                 else
                   {:reply, {:close, 4001, "INVALID_RESUME_SESSION"}, state}
@@ -294,6 +298,39 @@ defmodule Gateway.Socket.Handler do
 
             {:error, :not_found} ->
               {:reply, {:close, 4001, "INVALID_RESUME_SESSION"}, state}
+          end
+        else
+          send(
+            self(),
+            {:send_event, :SYNTAX_ERROR, %{code: "MISSING_DATA"}}
+          )
+        end
+
+      # Send Reaction to group
+      14 ->
+        if data["d"] != nil and is_map(data["d"]) do
+          if Enum.member?(
+               ["👍", "✌️", "👋", "🤙", "😂", "😮‍💨", "🤬", "🤯", "🫠", "🫡", "💨", "🚬"],
+               data["d"]["emoji"]
+             ) do
+            case Hammer.check_rate("send_reaction:#{}", 10_000, 10) do
+              {:allow, _count} ->
+                GenServer.cast(
+                  state.linked_session,
+                  {:send_reaction_to_group, data["d"]["emoji"]}
+                )
+
+              {:deny, _limit} ->
+                send(
+                  self(),
+                  {:send_event, :RATE_LIMITED}
+                )
+            end
+          else
+            send(
+              self(),
+              {:send_event, :SYNTAX_ERROR, %{code: "MISSING_DATA"}}
+            )
           end
         else
           send(

@@ -213,7 +213,7 @@ defmodule Gateway.Session do
     {:noreply, state}
   end
 
-  def handle_cast({:send_group_user_message, author_session_id, message_data}, state) do
+  def handle_cast({:send_group_user_message, message_data, author_session_id}, state) do
     send(
       state.linked_socket,
       {:send_event, :GROUP_MESSAGE,
@@ -221,6 +221,20 @@ defmodule Gateway.Session do
          group_id: state.group_id,
          author_session_id: author_session_id,
          message: message_data
+       }}
+    )
+
+    {:noreply, state}
+  end
+
+  def handle_cast({:send_group_user_reaction, emoji, author_session_id}, state) do
+    send(
+      state.linked_socket,
+      {:send_event, :GROUP_REACTION,
+       %{
+         group_id: state.group_id,
+         author_session_id: author_session_id,
+         emoji: emoji
        }}
     )
 
@@ -282,6 +296,15 @@ defmodule Gateway.Session do
     if state.group_id != nil do
       {:ok, group} = GenRegistry.lookup(Gateway.Group, state.group_id)
       GenServer.cast(group, {:broadcast_user_message, message_data, state.session_id})
+    end
+
+    {:noreply, state}
+  end
+
+  def handle_cast({:send_reaction_to_group, emoji}, state) do
+    if state.group_id != nil do
+      {:ok, group} = GenRegistry.lookup(Gateway.Group, state.group_id)
+      GenServer.cast(group, {:broadcast_user_reaction, emoji, state.session_id})
     end
 
     {:noreply, state}

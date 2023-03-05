@@ -211,7 +211,21 @@ defmodule Gateway.Group do
     for member <- state.members do
       case GenRegistry.lookup(Gateway.Session, member) do
         {:ok, pid} ->
-          GenServer.cast(pid, {:send_group_user_message, session_id, message_data})
+          GenServer.cast(pid, {:send_group_user_message, message_data, session_id})
+
+        {:error, :not_found} ->
+          nil
+      end
+    end
+
+    {:noreply, state}
+  end
+
+  def handle_cast({:broadcast_user_reaction, emoji, session_id}, state) do
+    for member <- state.members do
+      case GenRegistry.lookup(Gateway.Session, member) do
+        {:ok, pid} ->
+          GenServer.cast(pid, {:send_group_user_reaction, emoji, session_id})
 
         {:error, :not_found} ->
           nil
