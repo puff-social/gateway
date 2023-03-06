@@ -32,7 +32,8 @@ defmodule Gateway.MixProject do
       {:jason, "~> 1.2"},
       {:hackney, "~> 1.8"},
       {:hammer, "~> 6.1"},
-      {:amqp, "~> 2.1"}
+      {:amqp, "~> 2.1"},
+      {:valdi, "~> 0.2.0"}
     ]
   end
 end

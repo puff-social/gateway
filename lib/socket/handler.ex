@@ -366,6 +366,10 @@ defmodule Gateway.Socket.Handler do
           )
         end
 
+      # Delete group
+      15 ->
+        GenServer.cast(state.linked_session, {:delete_group})
+
       _ ->
         nil
     end

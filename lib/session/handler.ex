@@ -484,6 +484,25 @@ defmodule Gateway.Session do
     end
   end
 
+  def handle_cast({:delete_group}, state) do
+    case GenRegistry.lookup(Gateway.Group, state.group_id) do
+      {:ok, pid} ->
+        group_state = GenServer.call(pid, {:get_state})
+
+        if group_state.owner_session_id != state.session_id do
+          send(state.linked_socket, {:send_event, :GROUP_ACTION_ERROR, %{code: "NOT_OWNER"}})
+        else
+          send(pid, {:delete})
+        end
+
+        {:noreply, state}
+
+      {:error, :not_found} ->
+        send(state.linked_socket, {:send_event, :GROUP_ACTION_ERROR, %{code: "NOT_IN_GROUP"}})
+        {:noreply, state}
+    end
+  end
+
   def handle_cast({:update_device_state, device_state}, state) when state.group_id != nil do
     {:ok, group_pid} = GenRegistry.lookup(Gateway.Group, state.group_id)
 
