@@ -304,7 +304,7 @@ defmodule Gateway.Socket.Handler do
           case GenRegistry.lookup(Gateway.Session, data["d"]["session_id"]) do
             {:ok, session_pid} ->
               if session_pid != nil do
-                session_state = GenServer.call(session_pid, {:get_state})
+                session_state = :sys.get_state(session_pid)
 
                 if session_state.session_token == data["d"]["session_token"] do
                   GenServer.cast(session_pid, {:link_socket_without_init, self()})

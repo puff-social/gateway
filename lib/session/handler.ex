@@ -114,10 +114,6 @@ defmodule Gateway.Session do
     {:noreply, state}
   end
 
-  def handle_call({:get_state}, _from, state) do
-    {:reply, state, state}
-  end
-
   def handle_cast({:send_join, group_state}, state) do
     send(
       state.linked_socket,
@@ -133,7 +129,7 @@ defmodule Gateway.Session do
            Enum.reduce(group_state.members, [], fn id, acc ->
              case GenRegistry.lookup(Gateway.Session, id) do
                {:ok, pid} ->
-                 session_state = GenServer.call(pid, {:get_state})
+                 session_state = :sys.get_state(pid)
 
                  if Process.alive?(pid) do
                    [
@@ -314,7 +310,7 @@ defmodule Gateway.Session do
   def handle_cast({:start_with_ready}, state) do
     if state.group_id != nil do
       {:ok, group} = GenRegistry.lookup(Gateway.Group, state.group_id)
-      group_state = GenServer.call(group, {:get_state})
+      group_state = :sys.get_state(group)
 
       if length(group_state.ready) == 0 do
         if Process.alive?(state.linked_socket) do
@@ -439,7 +435,7 @@ defmodule Gateway.Session do
   def handle_cast({:join_group, group_id}, state) do
     case GenRegistry.lookup(Gateway.Group, group_id) do
       {:ok, pid} ->
-        group_state = GenServer.call(pid, {:get_state})
+        group_state = :sys.get_state(pid)
 
         if Enum.member?(group_state.members, state.session_id) do
           if Process.alive?(state.linked_socket) do
@@ -471,7 +467,7 @@ defmodule Gateway.Session do
   def handle_cast({:leave_group}, state) do
     case GenRegistry.lookup(Gateway.Group, state.group_id) do
       {:ok, pid} ->
-        group_state = GenServer.call(pid, {:get_state})
+        group_state = :sys.get_state(pid)
 
         if Enum.member?(group_state.members, state.session_id) do
           GenServer.cast(pid, {:leave_group, state.session_id})
@@ -487,7 +483,7 @@ defmodule Gateway.Session do
   def handle_cast({:delete_group}, state) do
     case GenRegistry.lookup(Gateway.Group, state.group_id) do
       {:ok, pid} ->
-        group_state = GenServer.call(pid, {:get_state})
+        group_state = :sys.get_state(pid)
 
         if group_state.owner_session_id != state.session_id do
           send(state.linked_socket, {:send_event, :GROUP_ACTION_ERROR, %{code: "NOT_OWNER"}})
@@ -511,7 +507,7 @@ defmodule Gateway.Session do
       {:group_user_device_update, state.session_id, device_state}
     )
 
-    group_state = GenServer.call(group_pid, {:get_state})
+    group_state = :sys.get_state(group_pid)
 
     cond do
       group_state.state == "awaiting" and device_state["state"] == 6 ->
@@ -572,7 +568,7 @@ defmodule Gateway.Session do
     groups =
       GenRegistry.reduce(Gateway.Group, [], fn
         {_id, pid}, list ->
-          state = GenServer.call(pid, {:get_state})
+          state = :sys.get_state(pid)
 
           if state.visibility == "public" do
             [

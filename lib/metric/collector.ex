@@ -31,6 +31,13 @@ defmodule Gateway.Metrics.Collector do
       labels: [],
       help: "Number of total messages received since pod creation."
     )
+
+    Counter.new(
+      name: :puffers_seshes_count,
+      registry: @registry,
+      labels: [:group],
+      help: "Total sessions across all groups."
+    )
   end
 
   def dec(:gauge, stat) do
@@ -43,6 +50,10 @@ defmodule Gateway.Metrics.Collector do
 
   def inc(:counter, stat) do
     Counter.inc(name: stat, registry: @registry)
+  end
+
+  def inc(:counter, stat, labels) do
+    Counter.inc(name: stat, registry: @registry, labels: labels)
   end
 
   def set(:gauge, stat, value) do

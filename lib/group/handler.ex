@@ -96,17 +96,13 @@ defmodule Gateway.Group do
     end
   end
 
-  def handle_call({:get_state}, _from, state) do
-    {:reply, state, state}
-  end
-
   def handle_call({:get_members}, _from, state) do
     members_with_devices =
       Enum.filter(state.members, fn member ->
         case GenRegistry.lookup(Gateway.Session, member) do
           {:ok, pid} ->
             if Process.alive?(pid) do
-              session_state = GenServer.call(pid, {:get_state})
+              session_state = :sys.get_state(pid)
               session_state.device_state != %{}
             else
               false
@@ -122,7 +118,7 @@ defmodule Gateway.Group do
         case GenRegistry.lookup(Gateway.Session, member) do
           {:ok, pid} ->
             if Process.alive?(pid) do
-              session_state = GenServer.call(pid, {:get_state})
+              session_state = :sys.get_state(pid)
               session_state.device_state == %{}
             else
               false
@@ -146,6 +142,8 @@ defmodule Gateway.Group do
 
   def handle_cast({:increment_sesh_counter}, state) do
     new_state = %{state | sesh_counter: state.sesh_counter + 1}
+
+    Gateway.Metrics.Collector.inc(:counter, :puffers_seshes_count, [state.group_id])
 
     for member <- state.members do
       case GenRegistry.lookup(Gateway.Session, member) do
@@ -241,7 +239,7 @@ defmodule Gateway.Group do
         case GenRegistry.lookup(Gateway.Session, member) do
           {:ok, pid} ->
             if Process.alive?(pid) do
-              session_state = GenServer.call(pid, {:get_state})
+              session_state = :sys.get_state(pid)
               session_state.device_state != %{}
             else
               false
@@ -379,7 +377,7 @@ defmodule Gateway.Group do
           case GenRegistry.lookup(Gateway.Session, member) do
             {:ok, pid} ->
               if Process.alive?(pid) do
-                session_state = GenServer.call(pid, {:get_state})
+                session_state = :sys.get_state(pid)
                 session_state.device_state != %{}
               else
                 false
@@ -407,7 +405,7 @@ defmodule Gateway.Group do
         case GenRegistry.lookup(Gateway.Session, member) do
           {:ok, pid} ->
             if Process.alive?(pid) do
-              session_state = GenServer.call(pid, {:get_state})
+              session_state = :sys.get_state(pid)
               session_state.device_state != %{}
             else
               false
@@ -462,7 +460,7 @@ defmodule Gateway.Group do
         case GenRegistry.lookup(Gateway.Session, member) do
           {:ok, pid} ->
             if Process.alive?(pid) do
-              session_state = GenServer.call(pid, {:get_state})
+              session_state = :sys.get_state(pid)
               session_state.device_state != %{}
             else
               false
