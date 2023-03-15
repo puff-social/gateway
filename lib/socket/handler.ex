@@ -337,10 +337,29 @@ defmodule Gateway.Socket.Handler do
       14 ->
         if data["d"] != nil and is_map(data["d"]) do
           if Enum.member?(
-               ["👍", "✌️", "👋", "🤙", "😂", "😮‍💨", "🤬", "🤯", "🫠", "🫡", "💨", "🚬"],
+               [
+                 "👍",
+                 "✌️",
+                 "👋",
+                 "🤙",
+                 "😂",
+                 "😮‍💨",
+                 "🤬",
+                 "🤯",
+                 "🫠",
+                 "🫡",
+                 "💨",
+                 "🚬",
+                 "🗡️",
+                 "🕐",
+                 "⏭️",
+                 "⏳",
+                 "🎙️",
+                 "🔥"
+               ],
                data["d"]["emoji"]
              ) do
-            case Hammer.check_rate("send_reaction:#{state.session_id}", 10_000, 10) do
+            case Hammer.check_rate("send_reaction:#{state.session_id}", 5_000, 15) do
               {:allow, _count} ->
                 GenServer.cast(
                   state.linked_session,
