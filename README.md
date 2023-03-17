@@ -22,6 +22,8 @@ Elixir realtime gateway that enables realtime synchronization of group sessions 
 | `13`   | Resume active session    | `C > S`   |
 | `14`   | Send reaction to group   | `C > S`   |
 | `15`   | Delete Group             | `C > S`   |
+| `16`   | Transfer group ownership | `C > S`   |
+| `17`   | Kick member from group   | `C > S`   |
 | `420`  | Heartbeat                | `C > S`   |
 
 ## Events (Op: 3)
@@ -49,4 +51,5 @@ Elixir realtime gateway that enables realtime synchronization of group sessions 
 | `GROUP_USER_DEVICE_DISCONNECT` | Sent to group members when OP 10 is sent by another member               |
 | `GROUP_REACTION`               | Sent to group members when OP 14 is sent by any member, with an emoji    |
 | `GROUP_MESSAGE`                | Sent to group members when OP 11 is sent by any member                   |
+| `GROUP_USER_KICKED`            | Sent to a single group member when they're kicked from a group           |
 | `SESSION_RESUMED`              | Sent in response to OP 13 when session is resumed successfully           |

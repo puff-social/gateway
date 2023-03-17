@@ -205,6 +205,40 @@ defmodule Gateway.Group do
     {:noreply, state}
   end
 
+  def handle_cast({:kick_member_from_group, session_id}, state) do
+    if Enum.member?(state.ready, session_id) do
+      GenServer.cast(self(), {:group_user_unready, session_id})
+    end
+
+    case GenRegistry.lookup(Gateway.Session, session_id) do
+      {:ok, pid} ->
+        GenServer.cast(pid, {:send_user_kicked, state.group_id})
+
+      {:error, :not_found} ->
+        nil
+    end
+
+    GenServer.cast(self(), {:leave_group, session_id})
+
+    {:noreply, state}
+  end
+
+  def handle_cast({:transfer_group_ownership, session_id}, state) do
+    new_state = %{state | owner_session_id: session_id}
+
+    for member <- state.members do
+      case GenRegistry.lookup(Gateway.Session, member) do
+        {:ok, pid} ->
+          GenServer.cast(pid, {:send_group_update, new_state})
+
+        {:error, :not_found} ->
+          nil
+      end
+    end
+
+    {:noreply, new_state}
+  end
+
   def handle_cast({:broadcast_user_message, message_data, session_id}, state) do
     for member <- state.members do
       case GenRegistry.lookup(Gateway.Session, member) do

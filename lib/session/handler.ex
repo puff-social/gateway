@@ -358,6 +358,15 @@ defmodule Gateway.Session do
     {:noreply, state}
   end
 
+  def handle_cast({:send_user_kicked, group_id}, state) do
+    send(
+      state.linked_socket,
+      {:send_event, :GROUP_USER_KICKED, %{group_id: group_id}}
+    )
+
+    {:noreply, state}
+  end
+
   def handle_cast({:send_group_update, group_state}, state) do
     if Process.alive?(state.linked_socket) do
       send(state.linked_socket, {:send_event, :GROUP_UPDATE, group_state})
@@ -489,6 +498,44 @@ defmodule Gateway.Session do
           send(state.linked_socket, {:send_event, :GROUP_ACTION_ERROR, %{code: "NOT_OWNER"}})
         else
           send(pid, {:delete})
+        end
+
+        {:noreply, state}
+
+      {:error, :not_found} ->
+        send(state.linked_socket, {:send_event, :GROUP_ACTION_ERROR, %{code: "NOT_IN_GROUP"}})
+        {:noreply, state}
+    end
+  end
+
+  def handle_cast({:transfer_group_ownership, session_id}, state) do
+    case GenRegistry.lookup(Gateway.Group, state.group_id) do
+      {:ok, pid} ->
+        group_state = :sys.get_state(pid)
+
+        if group_state.owner_session_id != state.session_id do
+          send(state.linked_socket, {:send_event, :GROUP_ACTION_ERROR, %{code: "NOT_OWNER"}})
+        else
+          GenServer.cast(pid, {:transfer_group_ownership, session_id})
+        end
+
+        {:noreply, state}
+
+      {:error, :not_found} ->
+        send(state.linked_socket, {:send_event, :GROUP_ACTION_ERROR, %{code: "NOT_IN_GROUP"}})
+        {:noreply, state}
+    end
+  end
+
+  def handle_cast({:kick_member_from_group, session_id}, state) do
+    case GenRegistry.lookup(Gateway.Group, state.group_id) do
+      {:ok, pid} ->
+        group_state = :sys.get_state(pid)
+
+        if group_state.owner_session_id != state.session_id do
+          send(state.linked_socket, {:send_event, :GROUP_ACTION_ERROR, %{code: "NOT_OWNER"}})
+        else
+          GenServer.cast(pid, {:kick_member_from_group, session_id})
         end
 
         {:noreply, state}

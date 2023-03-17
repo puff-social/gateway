@@ -389,6 +389,61 @@ defmodule Gateway.Socket.Handler do
       15 ->
         GenServer.cast(state.linked_session, {:delete_group})
 
+      # Make another session group owner
+      16 ->
+        if data["d"] != nil and is_map(data["d"]) do
+          if data["d"]["session_id"] == nil do
+            send(
+              self(),
+              {:send_event, :USER_UPDATE_ERROR, %{code: "INVALID_TARGET_SESSION_ID"}}
+            )
+
+            :ok
+          else
+            case Hammer.check_rate("group_edit:#{state.session_id}", 10_000, 10) do
+              {:allow, _count} ->
+                GenServer.cast(
+                  state.linked_session,
+                  {:transfer_group_ownership, data["d"]["session_id"]}
+                )
+
+              {:deny, _limit} ->
+                send(
+                  self(),
+                  {:send_event, :RATE_LIMITED}
+                )
+            end
+          end
+        else
+          send(
+            self(),
+            {:send_event, :SYNTAX_ERROR, %{code: "MISSING_DATA"}}
+          )
+        end
+
+      # Kick session from group
+      17 ->
+        if data["d"] != nil and is_map(data["d"]) do
+          if data["d"]["session_id"] == nil do
+            send(
+              self(),
+              {:send_event, :USER_UPDATE_ERROR, %{code: "INVALID_TARGET_SESSION_ID"}}
+            )
+
+            :ok
+          else
+            GenServer.cast(
+              state.linked_session,
+              {:kick_member_from_group, data["d"]["session_id"]}
+            )
+          end
+        else
+          send(
+            self(),
+            {:send_event, :SYNTAX_ERROR, %{code: "MISSING_DATA"}}
+          )
+        end
+
       _ ->
         nil
     end
