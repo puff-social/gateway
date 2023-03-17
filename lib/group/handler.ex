@@ -240,6 +240,8 @@ defmodule Gateway.Group do
   end
 
   def handle_cast({:broadcast_user_message, message_data, session_id}, state) do
+    message_data = Map.put(message_data, "timestamp", :os.system_time(:millisecond))
+
     for member <- state.members do
       case GenRegistry.lookup(Gateway.Session, member) do
         {:ok, pid} ->

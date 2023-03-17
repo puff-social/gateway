@@ -239,17 +239,17 @@ defmodule Gateway.Socket.Handler do
             )
 
             :ok
-          end
+          else
+            case Hammer.check_rate("user_update:#{state.session_id}", 30_000, 5) do
+              {:allow, _count} ->
+                GenServer.cast(state.linked_session, {:update_session_state, data["d"]})
 
-          case Hammer.check_rate("user_update:#{state.session_id}", 30_000, 5) do
-            {:allow, _count} ->
-              GenServer.cast(state.linked_session, {:update_session_state, data["d"]})
-
-            {:deny, _limit} ->
-              send(
-                self(),
-                {:send_event, :RATE_LIMITED}
-              )
+              {:deny, _limit} ->
+                send(
+                  self(),
+                  {:send_event, :RATE_LIMITED}
+                )
+            end
           end
         else
           send(
@@ -277,15 +277,28 @@ defmodule Gateway.Socket.Handler do
       # Send message to group
       11 ->
         if data["d"] != nil and is_map(data["d"]) do
-          case Hammer.check_rate("send_message:#{state.session_id}", 10_000, 10) do
-            {:allow, _count} ->
-              GenServer.cast(state.linked_session, {:send_message_to_group, data["d"]})
+          if data["d"]["content"] == nil or
+               String.trim(data["d"]["content"]) == "" or
+               String.normalize(data["d"]["content"], :nfc) !=
+                 String.normalize(data["d"]["content"], :nfd) or
+               String.length(data["d"]["content"]) > 1024 do
+            send(
+              self(),
+              {:send_event, :MESSAGE_ERROR, %{code: "INVALID_CONTENT"}}
+            )
 
-            {:deny, _limit} ->
-              send(
-                self(),
-                {:send_event, :RATE_LIMITED}
-              )
+            :ok
+          else
+            case Hammer.check_rate("send_message:#{state.session_id}", 10_000, 10) do
+              {:allow, _count} ->
+                GenServer.cast(state.linked_session, {:send_message_to_group, data["d"]})
+
+              {:deny, _limit} ->
+                send(
+                  self(),
+                  {:send_event, :RATE_LIMITED}
+                )
+            end
           end
         else
           send(
