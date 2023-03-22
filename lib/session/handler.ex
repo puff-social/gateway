@@ -7,6 +7,7 @@ defmodule Gateway.Session do
             name: nil,
             linked_socket: nil,
             group_id: nil,
+            away: nil,
             device_state: nil,
             session_token: nil
 
@@ -17,6 +18,7 @@ defmodule Gateway.Session do
             name: name,
             linked_socket: linked_socket,
             group_id: group_id,
+            away: away,
             device_state: device_state,
             session_token: session_token
           },
@@ -28,6 +30,7 @@ defmodule Gateway.Session do
           "name" => name,
           "linked_socket" => linked_socket,
           "group_id" => group_id,
+          "away" => away,
           "device_state" => device_state,
           "session_token" => session_token
         },
@@ -51,6 +54,7 @@ defmodule Gateway.Session do
        name: "Unnamed",
        linked_socket: nil,
        group_id: nil,
+       away: false,
        device_state: %{},
        session_token: session_token
      }, {:continue, :setup_session}}
@@ -136,7 +140,8 @@ defmodule Gateway.Session do
                      %{
                        name: session_state.name,
                        session_id: session_state.session_id,
-                       device_state: session_state.device_state
+                       device_state: session_state.device_state,
+                       away: session_state.away
                      }
                      | acc
                    ]
@@ -154,11 +159,25 @@ defmodule Gateway.Session do
     {:noreply, state}
   end
 
-  def handle_cast({:send_user_join, group_id, session_id, session_name}, state) do
+  def handle_cast({:send_user_join, group_id, session}, state) do
     send(
       state.linked_socket,
       {:send_event, :GROUP_USER_JOIN,
-       %{group_id: group_id, session_id: session_id, name: session_name}}
+       %{
+         group_id: group_id,
+         session_id: session.session_id,
+         name: session.name,
+         away_state: session.away
+       }}
+    )
+
+    {:noreply, state}
+  end
+
+  def handle_cast({:send_group_user_away, session_id, away_state}, state) do
+    send(
+      state.linked_socket,
+      {:send_event, :GROUP_USER_AWAY_STATE, %{session_id: session_id, state: away_state}}
     )
 
     {:noreply, state}
@@ -261,19 +280,19 @@ defmodule Gateway.Session do
     {:noreply, state}
   end
 
-  def handle_cast({:send_group_heat_start}, state) do
+  def handle_cast({:send_group_heat_start, options}, state) do
     send(
       state.linked_socket,
-      {:send_event, :GROUP_START_HEATING}
+      {:send_event, :GROUP_START_HEATING, options}
     )
 
     {:noreply, state}
   end
 
-  def handle_cast({:send_group_heat_inquiry, session_id}, state) do
+  def handle_cast({:send_group_heat_inquiry, session_id, options}, state) do
     send(
       state.linked_socket,
-      {:send_event, :GROUP_HEAT_INQUIRY, %{session_id: session_id}}
+      {:send_event, :GROUP_HEAT_INQUIRY, Map.merge(%{session_id: session_id}, options)}
     )
 
     {:noreply, state}
@@ -458,7 +477,7 @@ defmodule Gateway.Session do
         else
           GenServer.cast(
             pid,
-            {:join_group, state.session_id, state.name, self()}
+            {:join_group, state, self()}
           )
 
           {:noreply, %{state | group_id: group_id}}
@@ -546,6 +565,19 @@ defmodule Gateway.Session do
     end
   end
 
+  def handle_cast({:set_session_away_state, away_state}, state) do
+    case GenRegistry.lookup(Gateway.Group, state.group_id) do
+      {:ok, pid} ->
+        GenServer.cast(pid, {:group_user_away_change, state.session_id, away_state})
+        new_state = %{state | away: away_state}
+        {:noreply, new_state}
+
+      {:error, :not_found} ->
+        send(state.linked_socket, {:send_event, :GROUP_ACTION_ERROR, %{code: "NOT_IN_GROUP"}})
+        {:noreply, state}
+    end
+  end
+
   def handle_cast({:update_device_state, device_state}, state) when state.group_id != nil do
     {:ok, group_pid} = GenRegistry.lookup(Gateway.Group, state.group_id)
 
@@ -556,17 +588,19 @@ defmodule Gateway.Session do
 
     group_state = :sys.get_state(group_pid)
 
-    cond do
-      group_state.state == "awaiting" and device_state["state"] == 6 ->
-        GenServer.cast(group_pid, {:group_user_ready, state.session_id})
+    if !state.away do
+      cond do
+        group_state.state == "awaiting" and device_state["state"] == 6 ->
+          GenServer.cast(group_pid, {:group_user_ready, state.session_id})
 
-      group_state.state == "seshing" and device_state["state"] == 5 and
-          (state.device_state.state == 8 or state.device_state.state == 7) ->
-        GenServer.cast(group_pid, {:increment_sesh_counter})
-        GenServer.cast(group_pid, {:set_group_state, "chilling"})
+        group_state.state == "seshing" and device_state["state"] == 5 and
+            (state.device_state.state == 8 or state.device_state.state == 7) ->
+          GenServer.cast(group_pid, {:increment_sesh_counter})
+          GenServer.cast(group_pid, {:set_group_state, "chilling"})
 
-      true ->
-        true
+        true ->
+          true
+      end
     end
 
     {:noreply,

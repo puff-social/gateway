@@ -457,6 +457,29 @@ defmodule Gateway.Socket.Handler do
           )
         end
 
+      # Set our sessions away state
+      18 ->
+        if data["d"] != nil and is_map(data["d"]) do
+          if data["d"]["state"] == nil or !is_boolean(data["d"]["state"]) do
+            send(
+              self(),
+              {:send_event, :USER_UPDATE_ERROR, %{code: "INVALID_PAYLOAD"}}
+            )
+
+            :ok
+          else
+            GenServer.cast(
+              state.linked_session,
+              {:set_session_away_state, data["d"]["state"]}
+            )
+          end
+        else
+          send(
+            self(),
+            {:send_event, :SYNTAX_ERROR, %{code: "MISSING_DATA"}}
+          )
+        end
+
       _ ->
         nil
     end
