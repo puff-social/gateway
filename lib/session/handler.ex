@@ -167,7 +167,7 @@ defmodule Gateway.Session do
          group_id: group_id,
          session_id: session.session_id,
          name: session.name,
-         away_state: session.away
+         away: session.away
        }}
     )
 
