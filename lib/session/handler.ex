@@ -302,7 +302,7 @@ defmodule Gateway.Session do
     if state.group_id != nil do
       {:ok, group} = GenRegistry.lookup(Gateway.Group, state.group_id)
       GenServer.cast(group, {:group_user_device_disconnect, state.session_id})
-      {:noreply, %{state | device_state: %{}}}
+      {:noreply, %{state | device_state: %{}, away: false}}
     else
       {:noreply, state}
     end
