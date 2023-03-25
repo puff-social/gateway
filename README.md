@@ -54,4 +54,6 @@ Elixir realtime gateway that enables realtime synchronization of group sessions 
 | `GROUP_REACTION`               | Sent to group members when OP 14 is sent by any member, with an emoji    |
 | `GROUP_MESSAGE`                | Sent to group members when OP 11 is sent by any member                   |
 | `GROUP_USER_KICKED`            | Sent to a single group member when they're kicked from a group           |
+| `GROUP_USER_AWAY_STATE`        | Sent to all group members when OP 18 is sent by any member               |
+| `RATE_LIMITED`                 | Sent to a user when they've reached any rate limit bucket                |
 | `SESSION_RESUMED`              | Sent in response to OP 13 when session is resumed successfully           |
