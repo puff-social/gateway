@@ -490,6 +490,20 @@ defmodule Gateway.Group do
     {:noreply, new_state}
   end
 
+  def handle_cast({:group_user_strain_change, session_id, strain}, state) do
+    for member <- state.members do
+      case GenRegistry.lookup(Gateway.Session, member) do
+        {:ok, pid} ->
+          GenServer.cast(pid, {:send_group_user_strain_change, session_id, strain})
+
+        {:error, :not_found} ->
+          nil
+      end
+    end
+
+    {:noreply, state}
+  end
+
   def handle_cast({:group_user_away_change, session_id, away_state}, state) do
     for member <- state.members do
       case GenRegistry.lookup(Gateway.Session, member) do

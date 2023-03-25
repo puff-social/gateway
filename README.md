@@ -24,6 +24,8 @@ Elixir realtime gateway that enables realtime synchronization of group sessions 
 | `15`   | Delete Group             | `C > S`   |
 | `16`   | Transfer group ownership | `C > S`   |
 | `17`   | Kick member from group   | `C > S`   |
+| `18`   | Change our away state    | `C > S`   |
+| `19`   | Set current strain       | `C > S`   |
 | `420`  | Heartbeat                | `C > S`   |
 
 ## Events (Op: 3)

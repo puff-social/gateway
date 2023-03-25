@@ -7,6 +7,7 @@ defmodule Gateway.Session do
             name: nil,
             linked_socket: nil,
             group_id: nil,
+            strain: nil,
             away: nil,
             device_state: nil,
             session_token: nil
@@ -18,6 +19,7 @@ defmodule Gateway.Session do
             name: name,
             linked_socket: linked_socket,
             group_id: group_id,
+            strain: strain,
             away: away,
             device_state: device_state,
             session_token: session_token
@@ -30,6 +32,7 @@ defmodule Gateway.Session do
           "name" => name,
           "linked_socket" => linked_socket,
           "group_id" => group_id,
+          "strain" => strain,
           "away" => away,
           "device_state" => device_state,
           "session_token" => session_token
@@ -54,6 +57,7 @@ defmodule Gateway.Session do
        name: "Unnamed",
        linked_socket: nil,
        group_id: nil,
+       strain: nil,
        away: false,
        device_state: %{},
        session_token: session_token
@@ -129,6 +133,7 @@ defmodule Gateway.Session do
          state: group_state.state,
          sesh_counter: group_state.sesh_counter,
          owner_session_id: group_state.owner_session_id,
+         ready_members: group_state.ready,
          members:
            Enum.reduce(group_state.members, [], fn id, acc ->
              case GenRegistry.lookup(Gateway.Session, id) do
@@ -141,7 +146,8 @@ defmodule Gateway.Session do
                        name: session_state.name,
                        session_id: session_state.session_id,
                        device_state: session_state.device_state,
-                       away: session_state.away
+                       away: session_state.away,
+                       strain: session_state.strain
                      }
                      | acc
                    ]
@@ -167,7 +173,8 @@ defmodule Gateway.Session do
          group_id: group_id,
          session_id: session.session_id,
          name: session.name,
-         away: session.away
+         away: session.away,
+         strain: session.strain
        }}
     )
 
@@ -178,6 +185,16 @@ defmodule Gateway.Session do
     send(
       state.linked_socket,
       {:send_event, :GROUP_USER_AWAY_STATE, %{session_id: session_id, state: away_state}}
+    )
+
+    {:noreply, state}
+  end
+
+  def handle_cast({:send_group_user_strain_change, session_id, strain}, state) do
+    send(
+      state.linked_socket,
+      {:send_event, :GROUP_USER_UPDATE,
+       %{group_id: state.group_id, session_id: session_id, strain: strain}}
     )
 
     {:noreply, state}
@@ -570,6 +587,19 @@ defmodule Gateway.Session do
       {:ok, pid} ->
         GenServer.cast(pid, {:group_user_away_change, state.session_id, away_state})
         new_state = %{state | away: away_state}
+        {:noreply, new_state}
+
+      {:error, :not_found} ->
+        send(state.linked_socket, {:send_event, :GROUP_ACTION_ERROR, %{code: "NOT_IN_GROUP"}})
+        {:noreply, state}
+    end
+  end
+
+  def handle_cast({:set_group_session_strain, strain}, state) do
+    case GenRegistry.lookup(Gateway.Group, state.group_id) do
+      {:ok, pid} ->
+        GenServer.cast(pid, {:group_user_strain_change, state.session_id, strain})
+        new_state = %{state | strain: strain}
         {:noreply, new_state}
 
       {:error, :not_found} ->

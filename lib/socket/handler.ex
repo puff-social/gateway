@@ -150,7 +150,7 @@ defmodule Gateway.Socket.Handler do
   end
 
   def terminate(_reason, _req, state) do
-    Process.send_after(state.linked_session, {:close_session_if_socket_dead}, 15000)
+    Process.send_after(state.linked_session, {:close_session_if_socket_dead}, 5_000)
     Gateway.Metrics.Collector.dec(:gauge, :puffers_connected_sessions)
     :ok
   end
@@ -471,6 +471,33 @@ defmodule Gateway.Socket.Handler do
             GenServer.cast(
               state.linked_session,
               {:set_session_away_state, data["d"]["state"]}
+            )
+          end
+        else
+          send(
+            self(),
+            {:send_event, :SYNTAX_ERROR, %{code: "MISSING_DATA"}}
+          )
+        end
+
+      # Set session strain
+      19 ->
+        if data["d"] != nil and is_map(data["d"]) do
+          if data["d"]["strain"] == nil or
+               String.trim(data["d"]["strain"]) == "" or
+               String.normalize(data["d"]["strain"], :nfc) !=
+                 String.normalize(data["d"]["strain"], :nfd) or
+               String.length(data["d"]["strain"]) > 32 do
+            send(
+              self(),
+              {:send_event, :USER_UPDATE_ERROR, %{code: "INVALID_PAYLOAD"}}
+            )
+
+            :ok
+          else
+            GenServer.cast(
+              state.linked_session,
+              {:set_group_session_strain, data["d"]["strain"]}
             )
           end
         else
