@@ -150,7 +150,8 @@ defmodule Gateway.Socket.Handler do
   end
 
   def terminate(_reason, _req, state) do
-    Process.send_after(state.linked_session, {:close_session_if_socket_dead}, 5_000)
+    GenServer.cast(state.linked_session, {:socket_closed})
+    Process.send_after(state.linked_session, {:close_session_if_socket_dead}, 7_000)
     Gateway.Metrics.Collector.dec(:gauge, :puffers_connected_sessions)
     :ok
   end

@@ -10,7 +10,8 @@ defmodule Gateway.Session do
             strain: nil,
             away: nil,
             device_state: nil,
-            session_token: nil
+            session_token: nil,
+            disconnected: nil
 
   defimpl Jason.Encoder do
     def encode(
@@ -22,7 +23,8 @@ defmodule Gateway.Session do
             strain: strain,
             away: away,
             device_state: device_state,
-            session_token: session_token
+            session_token: session_token,
+            disconnected: disconnected
           },
           opts
         ) do
@@ -35,7 +37,8 @@ defmodule Gateway.Session do
           "strain" => strain,
           "away" => away,
           "device_state" => device_state,
-          "session_token" => session_token
+          "session_token" => session_token,
+          "disconnected" => disconnected
         },
         opts
       )
@@ -60,7 +63,8 @@ defmodule Gateway.Session do
        strain: nil,
        away: false,
        device_state: %{},
-       session_token: session_token
+       session_token: session_token,
+       disconnected: false
      }, {:continue, :setup_session}}
   end
 
@@ -120,6 +124,18 @@ defmodule Gateway.Session do
     )
 
     {:noreply, state}
+  end
+
+  def handle_cast({:socket_closed}, state) do
+    new_state = %{state | disconnected: true}
+
+    if state.group_id != nil do
+      {:ok, group_pid} = GenRegistry.lookup(Gateway.Group, state.group_id)
+      GenServer.cast(group_pid, {:group_user_unready, state.session_id})
+      GenServer.cast(group_pid, {:group_user_update, state.session_id, new_state})
+    end
+
+    {:noreply, new_state}
   end
 
   def handle_cast({:send_join, group_state}, state) do
@@ -225,7 +241,8 @@ defmodule Gateway.Session do
        %{
          group_id: group_id,
          session_id: session_state.session_id,
-         name: session_state.name
+         name: session_state.name,
+         disconnected: session_state.disconnected
        }}
     )
 
@@ -430,11 +447,14 @@ defmodule Gateway.Session do
   end
 
   def handle_cast({:link_socket_without_init, socket_pid}, state) do
-    {:noreply,
-     %{
-       state
-       | linked_socket: socket_pid
-     }}
+    new_state = %{state | disconnected: false, linked_socket: socket_pid}
+
+    if state.group_id != nil do
+      {:ok, group_pid} = GenRegistry.lookup(Gateway.Group, state.group_id)
+      GenServer.cast(group_pid, {:group_user_update, state.session_id, new_state})
+    end
+
+    {:noreply, new_state}
   end
 
   def handle_cast({:create_group, group_id, group_name, group_visibility}, state) do
