@@ -578,57 +578,61 @@ defmodule Gateway.Group do
   end
 
   def handle_cast({:group_user_unready, session_id}, state) do
-    members_with_devices =
-      Enum.filter(state.members, fn member ->
-        case GenRegistry.lookup(Gateway.Session, member) do
-          {:ok, pid} ->
-            if Process.alive?(pid) do
-              session_state = :sys.get_state(pid)
-              session_state.device_state != %{}
-            else
+    if Enum.member?(state.ready, session_id) do
+      members_with_devices =
+        Enum.filter(state.members, fn member ->
+          case GenRegistry.lookup(Gateway.Session, member) do
+            {:ok, pid} ->
+              if Process.alive?(pid) do
+                session_state = :sys.get_state(pid)
+                session_state.device_state != %{}
+              else
+                false
+              end
+
+            {:error, :not_found} ->
               false
-            end
+          end
+        end)
 
-          {:error, :not_found} ->
-            false
+      if length(members_with_devices) == 0 do
+        new_state = %{
+          state
+          | state: "chilling",
+            ready: Enum.filter(state.ready, fn member -> member !== session_id end)
+        }
+
+        for member <- state.members do
+          case GenRegistry.lookup(Gateway.Session, member) do
+            {:ok, pid} ->
+              GenServer.cast(pid, {:send_group_update, new_state})
+
+            {:error, :not_found} ->
+              nil
+          end
         end
-      end)
 
-    if length(members_with_devices) == 0 do
-      new_state = %{
-        state
-        | state: "chilling",
-          ready: Enum.filter(state.ready, fn member -> member !== session_id end)
-      }
+        {:noreply, new_state}
+      else
+        for member <- state.members do
+          case GenRegistry.lookup(Gateway.Session, member) do
+            {:ok, pid} ->
+              GenServer.cast(pid, {:send_group_user_unready, session_id})
 
-      for member <- state.members do
-        case GenRegistry.lookup(Gateway.Session, member) do
-          {:ok, pid} ->
-            GenServer.cast(pid, {:send_group_update, new_state})
-
-          {:error, :not_found} ->
-            nil
+            {:error, :not_found} ->
+              nil
+          end
         end
+
+        new_state = %{
+          state
+          | ready: Enum.filter(state.ready, fn member -> member !== session_id end)
+        }
+
+        {:noreply, new_state}
       end
-
-      {:noreply, new_state}
     else
-      for member <- state.members do
-        case GenRegistry.lookup(Gateway.Session, member) do
-          {:ok, pid} ->
-            GenServer.cast(pid, {:send_group_user_unready, session_id})
-
-          {:error, :not_found} ->
-            nil
-        end
-      end
-
-      new_state = %{
-        state
-        | ready: Enum.filter(state.ready, fn member -> member !== session_id end)
-      }
-
-      {:noreply, new_state}
+      {:noreply, state}
     end
   end
 
