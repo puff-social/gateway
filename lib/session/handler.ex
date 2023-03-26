@@ -163,6 +163,7 @@ defmodule Gateway.Session do
                        session_id: session_state.session_id,
                        device_state: session_state.device_state,
                        away: session_state.away,
+                       disconnected: session_state.disconnected,
                        strain: session_state.strain
                      }
                      | acc
