@@ -638,7 +638,7 @@ defmodule Gateway.Session do
 
     group_state = :sys.get_state(group_pid)
 
-    if !state.away do
+    if !state.away and !state.disconnected do
       cond do
         group_state.state == "awaiting" and device_state["state"] == 6 ->
           GenServer.cast(group_pid, {:group_user_ready, state.session_id})
