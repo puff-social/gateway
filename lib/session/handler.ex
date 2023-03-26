@@ -119,7 +119,7 @@ defmodule Gateway.Session do
        %{
          session_id: state.session_id,
          session_token: state.session_token,
-         heartbeat_interval: 25000
+         heartbeat_interval: 4_000
        }}
     )
 

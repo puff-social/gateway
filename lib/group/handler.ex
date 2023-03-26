@@ -802,7 +802,7 @@ defmodule Gateway.Group do
       end
 
     if length(new_members) == 0 do
-      Process.send_after(self(), {:check_empty_and_delete}, 30000)
+      Process.send_after(self(), {:check_empty_and_delete}, 30_000)
     end
 
     {:noreply, new_state}

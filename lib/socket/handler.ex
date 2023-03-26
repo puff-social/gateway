@@ -48,7 +48,7 @@ defmodule Gateway.Socket.Handler do
       encoding: encoding
     }
 
-    {:cowboy_websocket, request, state}
+    {:cowboy_websocket, request, state, %{idle_timeout: 5_000}}
   end
 
   def websocket_init(state) do
