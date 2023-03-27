@@ -407,7 +407,7 @@ defmodule Gateway.Group do
             pid,
             {:send_group_heat_start,
              %{
-               ready: Enum.member?(state.ready, member),
+               excluded: Enum.member?(members_without_devices, member),
                watcher: Enum.member?(members_without_devices, member),
                away: Enum.member?(away_members, member)
              }}
@@ -475,7 +475,6 @@ defmodule Gateway.Group do
             pid,
             {:send_group_heat_start,
              %{
-               ready: Enum.member?(state.ready, member),
                excluded: !Enum.member?(members, member),
                watcher: Enum.member?(members_without_devices, member),
                away: Enum.member?(away_members, member)
