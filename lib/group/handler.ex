@@ -368,45 +368,46 @@ defmodule Gateway.Group do
   def handle_cast({:start_group_heat}, state) do
     new_state = %{state | state: "seshing", ready: []}
 
+    members_without_devices =
+      Enum.filter(state.members, fn member ->
+        case GenRegistry.lookup(Gateway.Session, member) do
+          {:ok, pid} ->
+            if Process.alive?(pid) do
+              session_state = :sys.get_state(pid)
+              session_state.device_state == %{}
+            else
+              false
+            end
+
+          {:error, :not_found} ->
+            false
+        end
+      end)
+
+    away_members =
+      Enum.filter(state.members, fn member ->
+        case GenRegistry.lookup(Gateway.Session, member) do
+          {:ok, pid} ->
+            if Process.alive?(pid) do
+              session_state = :sys.get_state(pid)
+              session_state.device_state != %{} and session_state.away
+            else
+              false
+            end
+
+          {:error, :not_found} ->
+            nil
+        end
+      end)
+
     for member <- state.members do
       case GenRegistry.lookup(Gateway.Session, member) do
         {:ok, pid} ->
-          members_without_devices =
-            Enum.filter(state.members, fn member ->
-              case GenRegistry.lookup(Gateway.Session, member) do
-                {:ok, pid} ->
-                  if Process.alive?(pid) do
-                    session_state = :sys.get_state(pid)
-                    session_state.device_state == %{}
-                  else
-                    false
-                  end
-
-                {:error, :not_found} ->
-                  false
-              end
-            end)
-
-          away_members =
-            Enum.filter(state.members, fn member ->
-              case GenRegistry.lookup(Gateway.Session, member) do
-                {:ok, pid} ->
-                  if Process.alive?(pid) do
-                    session_state = :sys.get_state(pid)
-                    session_state.device_state != %{} and session_state.away
-                  else
-                    false
-                  end
-
-                {:error, :not_found} ->
-                  nil
-              end
-            end)
-
           GenServer.cast(
             pid,
             {:send_group_heat_start,
              %{
+               ready: Enum.member?(state.ready, member),
                watcher: Enum.member?(members_without_devices, member),
                away: Enum.member?(away_members, member)
              }}
