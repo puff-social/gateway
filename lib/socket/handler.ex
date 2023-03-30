@@ -508,6 +508,30 @@ defmodule Gateway.Socket.Handler do
           )
         end
 
+      # Link a user session to a gateway session
+      20 ->
+        if data["d"] != nil and is_map(data["d"]) do
+          if data["d"]["token"] == nil or
+               String.trim(data["d"]["token"]) == "" do
+            send(
+              self(),
+              {:send_event, :USER_LINK_ERROR, %{code: "INVALID_TOKEN"}}
+            )
+
+            :ok
+          else
+            GenServer.cast(
+              state.linked_session,
+              {:link_user_to_session, data["d"]["token"]}
+            )
+          end
+        else
+          send(
+            self(),
+            {:send_event, :SYNTAX_ERROR, %{code: "MISSING_DATA"}}
+          )
+        end
+
       _ ->
         nil
     end

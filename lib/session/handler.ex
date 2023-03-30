@@ -2,6 +2,7 @@ defmodule Gateway.Session do
   use GenServer
 
   alias Gateway.Session.Token
+  alias Gateway.Hash
 
   defstruct session_id: nil,
             name: nil,
@@ -11,7 +12,13 @@ defmodule Gateway.Session do
             away: nil,
             device_state: nil,
             session_token: nil,
-            disconnected: nil
+            disconnected: nil,
+            user: %{
+              id: nil,
+              name: nil,
+              image: nil,
+              flags: nil
+            }
 
   defimpl Jason.Encoder do
     def encode(
@@ -24,7 +31,8 @@ defmodule Gateway.Session do
             away: away,
             device_state: device_state,
             session_token: session_token,
-            disconnected: disconnected
+            disconnected: disconnected,
+            user: user
           },
           opts
         ) do
@@ -38,7 +46,8 @@ defmodule Gateway.Session do
           "away" => away,
           "device_state" => device_state,
           "session_token" => session_token,
-          "disconnected" => disconnected
+          "disconnected" => disconnected,
+          "user" => user
         },
         opts
       )
@@ -64,7 +73,8 @@ defmodule Gateway.Session do
        away: false,
        device_state: %{},
        session_token: session_token,
-       disconnected: false
+       disconnected: false,
+       user: nil
      }, {:continue, :setup_session}}
   end
 
@@ -164,7 +174,8 @@ defmodule Gateway.Session do
                        device_state: session_state.device_state,
                        away: session_state.away,
                        disconnected: session_state.disconnected,
-                       strain: session_state.strain
+                       strain: session_state.strain,
+                       user: session_state.user
                      }
                      | acc
                    ]
@@ -191,7 +202,8 @@ defmodule Gateway.Session do
          session_id: session.session_id,
          name: session.name,
          away: session.away,
-         strain: session.strain
+         strain: session.strain,
+         user: session.user
        }}
     )
 
@@ -243,7 +255,8 @@ defmodule Gateway.Session do
          group_id: group_id,
          session_id: session_state.session_id,
          name: session_state.name,
-         disconnected: session_state.disconnected
+         disconnected: session_state.disconnected,
+         user: session_state.user
        }}
     )
 
@@ -449,6 +462,19 @@ defmodule Gateway.Session do
 
   def handle_cast({:link_socket_without_init, socket_pid}, state) do
     new_state = %{state | disconnected: false, linked_socket: socket_pid}
+
+    if state.group_id != nil do
+      {:ok, group_pid} = GenRegistry.lookup(Gateway.Group, state.group_id)
+      GenServer.cast(group_pid, {:group_user_update, state.session_id, new_state})
+    end
+
+    {:noreply, new_state}
+  end
+
+  def handle_cast({:link_user_to_session, token}, state) do
+    user = Hash.get_user_by_token(token)
+
+    new_state = %{state | user: user}
 
     if state.group_id != nil do
       {:ok, group_pid} = GenRegistry.lookup(Gateway.Group, state.group_id)

@@ -30,6 +30,7 @@ defmodule Gateway.MixProject do
       {:uuid, "~> 1.1"},
       {:sentry, "~> 8.0"},
       {:jason, "~> 1.2"},
+      {:httpoison, "~> 2.0"},
       {:hackney, "~> 1.8"},
       {:hammer, "~> 6.1"},
       {:amqp, "~> 2.1"},
