@@ -332,17 +332,15 @@ defmodule Gateway.Group do
 
   def handle_cast({:group_user_device_update, session_id, device_state}, state) do
     for member <- state.members do
-      if member !== session_id do
-        case GenRegistry.lookup(Gateway.Session, member) do
-          {:ok, pid} ->
-            GenServer.cast(
-              pid,
-              {:send_group_user_device_update, session_id, device_state}
-            )
+      case GenRegistry.lookup(Gateway.Session, member) do
+        {:ok, pid} ->
+          GenServer.cast(
+            pid,
+            {:send_group_user_device_update, session_id, device_state}
+          )
 
-          {:error, :not_found} ->
-            nil
-        end
+        {:error, :not_found} ->
+          nil
       end
     end
 
