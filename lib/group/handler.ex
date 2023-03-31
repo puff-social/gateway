@@ -741,6 +741,8 @@ defmodule Gateway.Group do
         state
       end
 
+    new_state = %{new_state | members: Enum.concat(new_state.members, [session_state.session_id])}
+
     GenServer.cast(session_pid, {:send_join, new_state})
 
     for member <- new_state.members do
@@ -758,11 +760,7 @@ defmodule Gateway.Group do
       end
     end
 
-    {:noreply,
-     %{
-       new_state
-       | members: Enum.concat(new_state.members, [session_state.session_id])
-     }}
+    {:noreply, new_state}
   end
 
   def handle_cast({:leave_group, session_id}, state) do

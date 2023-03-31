@@ -8,6 +8,7 @@ defmodule Gateway.Session do
             name: nil,
             linked_socket: nil,
             group_id: nil,
+            group_joined: nil,
             strain: nil,
             away: nil,
             device_state: nil,
@@ -27,6 +28,7 @@ defmodule Gateway.Session do
             name: name,
             linked_socket: linked_socket,
             group_id: group_id,
+            group_joined: group_joined,
             strain: strain,
             away: away,
             device_state: device_state,
@@ -42,6 +44,7 @@ defmodule Gateway.Session do
           "name" => name,
           "linked_socket" => linked_socket,
           "group_id" => group_id,
+          "group_joined" => group_joined,
           "strain" => strain,
           "away" => away,
           "device_state" => device_state,
@@ -69,6 +72,7 @@ defmodule Gateway.Session do
        name: "Unnamed",
        linked_socket: nil,
        group_id: nil,
+       group_joined: nil,
        strain: nil,
        away: false,
        device_state: %{},
@@ -164,7 +168,12 @@ defmodule Gateway.Session do
            Enum.reduce(group_state.members, [], fn id, acc ->
              case GenRegistry.lookup(Gateway.Session, id) do
                {:ok, pid} ->
-                 session_state = :sys.get_state(pid)
+                 session_state =
+                   if id == state.session_id do
+                     state
+                   else
+                     :sys.get_state(pid)
+                   end
 
                  if Process.alive?(pid) do
                    [
@@ -173,6 +182,7 @@ defmodule Gateway.Session do
                        session_id: session_state.session_id,
                        device_state: session_state.device_state,
                        away: session_state.away,
+                       group_joined: session_state.group_joined,
                        disconnected: session_state.disconnected,
                        strain: session_state.strain,
                        user: session_state.user
@@ -199,6 +209,7 @@ defmodule Gateway.Session do
       {:send_event, :GROUP_USER_JOIN,
        %{
          group_id: group_id,
+         group_joined: session.group_joined,
          session_id: session.session_id,
          name: session.name,
          away: session.away,
@@ -544,7 +555,10 @@ defmodule Gateway.Session do
             {:join_group, state, self()}
           )
 
-          {:noreply, %{state | group_id: group_id}}
+          {:ok, currentTime} = DateTime.now("Etc/UTC")
+
+          {:noreply,
+           %{state | group_id: group_id, group_joined: DateTime.to_iso8601(currentTime)}}
         end
 
       {:error, :not_found} ->
@@ -565,10 +579,10 @@ defmodule Gateway.Session do
           GenServer.cast(pid, {:leave_group, state.session_id})
         end
 
-        {:noreply, %{state | group_id: nil, device_state: %{}}}
+        {:noreply, %{state | group_id: nil, group_joined: nil, device_state: %{}}}
 
       {:error, :not_found} ->
-        {:noreply, %{state | group_id: nil, device_state: %{}}}
+        {:noreply, %{state | group_id: nil, group_joined: nil, device_state: %{}}}
     end
   end
 
