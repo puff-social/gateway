@@ -791,7 +791,39 @@ defmodule Gateway.Group do
             {:ok, pid} ->
               GenServer.cast(
                 pid,
-                {:send_group_update, %{state | members: new_members, owner_session_id: new_owner}}
+                {:send_group_update,
+                 %{
+                   state
+                   | members:
+                       Enum.reduce(state.members, [], fn id, acc ->
+                         case GenRegistry.lookup(Gateway.Session, id) do
+                           {:ok, pid} ->
+                             session_state = :sys.get_state(pid)
+
+                             if Process.alive?(pid) do
+                               [
+                                 %{
+                                   name: session_state.name,
+                                   session_id: session_state.session_id,
+                                   device_state: session_state.device_state,
+                                   away: session_state.away,
+                                   group_joined: session_state.group_joined,
+                                   disconnected: session_state.disconnected,
+                                   strain: session_state.strain,
+                                   user: session_state.user
+                                 }
+                                 | acc
+                               ]
+                             else
+                               acc
+                             end
+
+                           {:error, :not_found} ->
+                             acc
+                         end
+                       end),
+                     owner_session_id: new_owner
+                 }}
               )
 
             {:error, :not_found} ->

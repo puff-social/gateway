@@ -550,15 +550,20 @@ defmodule Gateway.Session do
 
           {:noreply, state}
         else
-          GenServer.cast(
-            pid,
-            {:join_group, state, self()}
-          )
-
           {:ok, currentTime} = DateTime.now("Etc/UTC")
 
-          {:noreply,
-           %{state | group_id: group_id, group_joined: DateTime.to_iso8601(currentTime)}}
+          new_state = %{
+            state
+            | group_id: group_id,
+              group_joined: DateTime.to_iso8601(currentTime)
+          }
+
+          GenServer.cast(
+            pid,
+            {:join_group, new_state, self()}
+          )
+
+          {:noreply, new_state}
         end
 
       {:error, :not_found} ->
