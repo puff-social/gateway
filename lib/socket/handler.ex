@@ -151,7 +151,7 @@ defmodule Gateway.Socket.Handler do
 
   def terminate(_reason, _req, state) do
     GenServer.cast(state.linked_session, {:socket_closed})
-    Process.send_after(state.linked_session, {:close_session_if_socket_dead}, 7_000)
+    Process.send_after(state.linked_session, {:close_session_if_socket_dead}, 10_000)
     Gateway.Metrics.Collector.dec(:gauge, :puffers_connected_sessions)
     :ok
   end
@@ -330,15 +330,20 @@ defmodule Gateway.Socket.Handler do
 
                   send(self(), {:set_new_session, session_pid, session_state.session_id})
                   GenServer.stop(state.linked_session, :normal)
+
+                  {:noreply, state}
                 else
-                  {:reply, {:close, 4001, "INVALID_RESUME_SESSION"}, state}
+                  send(self(), {:remote_close, 4001, "INVALID_RESUME_SESSION"})
+                  {:noreply, state}
                 end
               else
-                {:reply, {:close, 4001, "INVALID_RESUME_SESSION"}, state}
+                send(self(), {:remote_close, 4001, "INVALID_RESUME_SESSION"})
+                {:noreply, state}
               end
 
             {:error, :not_found} ->
-              {:reply, {:close, 4001, "INVALID_RESUME_SESSION"}, state}
+              send(self(), {:remote_close, 4001, "INVALID_RESUME_SESSION"})
+              {:noreply, state}
           end
         else
           send(
