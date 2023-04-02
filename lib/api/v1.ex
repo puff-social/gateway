@@ -17,25 +17,35 @@ defmodule Gateway.Router.V1 do
     list =
       GenRegistry.reduce(Gateway.Group, [], fn
         {_id, pid}, list ->
-          group_state = :sys.get_state(pid)
-          group_members = GenServer.call(pid, {:get_members})
+          group_state =
+            try do
+              :sys.get_state(pid)
+            catch
+              :exit, _ -> nil
+            end
 
-          if group_state.visibility == "public" do
-            [
-              %{
-                group_id: group_state.group_id,
-                name: group_state.name,
-                visibility: group_state.visibility,
-                state: group_state.state,
-                sesh_counter: group_state.sesh_counter,
-                member_count: length(group_state.members),
-                watcher_count: length(group_members.watchers),
-                sesher_count: length(group_members.seshers)
-              }
-              | list
-            ]
-          else
+          if group_state == nil do
             list
+          else
+            group_members = GenServer.call(pid, {:get_members})
+
+            if group_state.visibility == "public" do
+              [
+                %{
+                  group_id: group_state.group_id,
+                  name: group_state.name,
+                  visibility: group_state.visibility,
+                  state: group_state.state,
+                  sesh_counter: group_state.sesh_counter,
+                  member_count: length(group_state.members),
+                  watcher_count: length(group_members.watchers),
+                  sesher_count: length(group_members.seshers)
+                }
+                | list
+              ]
+            else
+              list
+            end
           end
       end)
 
@@ -45,23 +55,33 @@ defmodule Gateway.Router.V1 do
   get "/groups/:id" do
     case GenRegistry.lookup(Gateway.Group, id) do
       {:ok, pid} ->
-        group_state = :sys.get_state(pid)
-        group_members = GenServer.call(pid, {:get_members})
+        group_state =
+          try do
+            :sys.get_state(pid)
+          catch
+            :exit, _ -> nil
+          end
 
-        Util.respond(
-          conn,
-          {:ok,
-           %{
-             group_id: group_state.group_id,
-             name: group_state.name,
-             visibility: group_state.visibility,
-             state: group_state.state,
-             sesh_counter: group_state.sesh_counter,
-             member_count: length(group_state.members),
-             watcher_count: length(group_members.watchers),
-             sesher_count: length(group_members.seshers)
-           }}
-        )
+        if group_state == nil do
+          Util.respond(conn, {:error, 404, :group_not_found, "Invalid group id provided"})
+        else
+          group_members = GenServer.call(pid, {:get_members})
+
+          Util.respond(
+            conn,
+            {:ok,
+             %{
+               group_id: group_state.group_id,
+               name: group_state.name,
+               visibility: group_state.visibility,
+               state: group_state.state,
+               sesh_counter: group_state.sesh_counter,
+               member_count: length(group_state.members),
+               watcher_count: length(group_members.watchers),
+               sesher_count: length(group_members.seshers)
+             }}
+          )
+        end
 
       {:error, :not_found} ->
         Util.respond(conn, {:error, 404, :group_not_found, "Invalid group id provided"})

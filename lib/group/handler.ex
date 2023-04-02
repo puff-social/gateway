@@ -45,6 +45,8 @@ defmodule Gateway.Group do
   end
 
   def init(state) do
+    Process.flag(:trap_exit, true)
+
     Gateway.Metrics.Collector.inc(:gauge, :puffers_active_groups)
 
     {:ok,
@@ -58,6 +60,22 @@ defmodule Gateway.Group do
        members: [],
        ready: []
      }, {:continue, :setup_session}}
+  end
+
+  def terminate(_reason, state) do
+    for member <- state.members do
+      case GenRegistry.lookup(Gateway.Session, member) do
+        {:ok, pid} ->
+          GenServer.cast(pid, {:send_group_delete, state.group_id})
+
+        {:error, :not_found} ->
+          nil
+      end
+    end
+
+    Gateway.Metrics.Collector.dec(:gauge, :puffers_active_groups)
+
+    {:noreply, state}
   end
 
   def handle_info({:EXIT, _pid, _reason}, state), do: {:noreply, state}
@@ -102,8 +120,14 @@ defmodule Gateway.Group do
         case GenRegistry.lookup(Gateway.Session, member) do
           {:ok, pid} ->
             if Process.alive?(pid) do
-              session_state = :sys.get_state(pid)
-              session_state.device_state != %{}
+              session_state =
+                try do
+                  :sys.get_state(pid)
+                catch
+                  :exit, _ -> nil
+                end
+
+              session_state != nil and session_state.device_state != %{}
             else
               false
             end
@@ -118,8 +142,14 @@ defmodule Gateway.Group do
         case GenRegistry.lookup(Gateway.Session, member) do
           {:ok, pid} ->
             if Process.alive?(pid) do
-              session_state = :sys.get_state(pid)
-              session_state.device_state == %{}
+              session_state =
+                try do
+                  :sys.get_state(pid)
+                catch
+                  :exit, _ -> nil
+                end
+
+              session_state != nil and session_state.device_state == %{}
             else
               false
             end
@@ -134,8 +164,14 @@ defmodule Gateway.Group do
         case GenRegistry.lookup(Gateway.Session, member) do
           {:ok, pid} ->
             if Process.alive?(pid) do
-              session_state = :sys.get_state(pid)
-              session_state.device_state != %{} and session_state.away
+              session_state =
+                try do
+                  :sys.get_state(pid)
+                catch
+                  :exit, _ -> nil
+                end
+
+              session_state != nil and session_state.device_state != %{} and session_state.away
             else
               false
             end
@@ -292,8 +328,14 @@ defmodule Gateway.Group do
         case GenRegistry.lookup(Gateway.Session, member) do
           {:ok, pid} ->
             if Process.alive?(pid) do
-              session_state = :sys.get_state(pid)
-              session_state.device_state != %{}
+              session_state =
+                try do
+                  :sys.get_state(pid)
+                catch
+                  :exit, _ -> nil
+                end
+
+              session_state != nil and session_state.device_state != %{}
             else
               false
             end
@@ -371,8 +413,14 @@ defmodule Gateway.Group do
         case GenRegistry.lookup(Gateway.Session, member) do
           {:ok, pid} ->
             if Process.alive?(pid) do
-              session_state = :sys.get_state(pid)
-              session_state.device_state == %{}
+              session_state =
+                try do
+                  :sys.get_state(pid)
+                catch
+                  :exit, _ -> nil
+                end
+
+              session_state != nil and session_state.device_state == %{}
             else
               false
             end
@@ -387,8 +435,14 @@ defmodule Gateway.Group do
         case GenRegistry.lookup(Gateway.Session, member) do
           {:ok, pid} ->
             if Process.alive?(pid) do
-              session_state = :sys.get_state(pid)
-              session_state.device_state != %{} and session_state.away
+              session_state =
+                try do
+                  :sys.get_state(pid)
+                catch
+                  :exit, _ -> nil
+                end
+
+              session_state != nil and session_state.device_state != %{} and session_state.away
             else
               false
             end
@@ -442,8 +496,14 @@ defmodule Gateway.Group do
               case GenRegistry.lookup(Gateway.Session, member) do
                 {:ok, pid} ->
                   if Process.alive?(pid) do
-                    session_state = :sys.get_state(pid)
-                    session_state.device_state == %{}
+                    session_state =
+                      try do
+                        :sys.get_state(pid)
+                      catch
+                        :exit, _ -> nil
+                      end
+
+                    session_state != nil and session_state.device_state == %{}
                   else
                     false
                   end
@@ -458,8 +518,15 @@ defmodule Gateway.Group do
               case GenRegistry.lookup(Gateway.Session, member) do
                 {:ok, pid} ->
                   if Process.alive?(pid) do
-                    session_state = :sys.get_state(pid)
-                    session_state.device_state != %{} and session_state.away
+                    session_state =
+                      try do
+                        :sys.get_state(pid)
+                      catch
+                        :exit, _ -> nil
+                      end
+
+                    session_state != nil and session_state.device_state != %{} and
+                      session_state.away
                   else
                     false
                   end
@@ -538,8 +605,14 @@ defmodule Gateway.Group do
           case GenRegistry.lookup(Gateway.Session, member) do
             {:ok, pid} ->
               if Process.alive?(pid) do
-                session_state = :sys.get_state(pid)
-                session_state.device_state != %{}
+                session_state =
+                  try do
+                    :sys.get_state(pid)
+                  catch
+                    :exit, _ -> nil
+                  end
+
+                session_state != nil and session_state.device_state != %{}
               else
                 false
               end
@@ -554,8 +627,14 @@ defmodule Gateway.Group do
           case GenRegistry.lookup(Gateway.Session, member) do
             {:ok, pid} ->
               if Process.alive?(pid) do
-                session_state = :sys.get_state(pid)
-                session_state.device_state != %{} and session_state.away
+                session_state =
+                  try do
+                    :sys.get_state(pid)
+                  catch
+                    :exit, _ -> nil
+                  end
+
+                session_state != nil and session_state.device_state != %{} and session_state.away
               else
                 false
               end
@@ -583,8 +662,14 @@ defmodule Gateway.Group do
           case GenRegistry.lookup(Gateway.Session, member) do
             {:ok, pid} ->
               if Process.alive?(pid) do
-                session_state = :sys.get_state(pid)
-                session_state.device_state != %{}
+                session_state =
+                  try do
+                    :sys.get_state(pid)
+                  catch
+                    :exit, _ -> nil
+                  end
+
+                session_state != nil and session_state.device_state != %{}
               else
                 false
               end
@@ -641,8 +726,14 @@ defmodule Gateway.Group do
         case GenRegistry.lookup(Gateway.Session, member) do
           {:ok, pid} ->
             if Process.alive?(pid) do
-              session_state = :sys.get_state(pid)
-              session_state.device_state != %{}
+              session_state =
+                try do
+                  :sys.get_state(pid)
+                catch
+                  :exit, _ -> nil
+                end
+
+              session_state != nil and session_state.device_state != %{}
             else
               false
             end
@@ -657,8 +748,14 @@ defmodule Gateway.Group do
         case GenRegistry.lookup(Gateway.Session, member) do
           {:ok, pid} ->
             if Process.alive?(pid) do
-              session_state = :sys.get_state(pid)
-              session_state.device_state == %{}
+              session_state =
+                try do
+                  :sys.get_state(pid)
+                catch
+                  :exit, _ -> nil
+                end
+
+              session_state != nil and session_state.device_state == %{}
             else
               false
             end
@@ -673,8 +770,14 @@ defmodule Gateway.Group do
         case GenRegistry.lookup(Gateway.Session, member) do
           {:ok, pid} ->
             if Process.alive?(pid) do
-              session_state = :sys.get_state(pid)
-              session_state.device_state != %{} and session_state.away
+              session_state =
+                try do
+                  :sys.get_state(pid)
+                catch
+                  :exit, _ -> nil
+                end
+
+              session_state != nil and session_state.device_state != %{} and session_state.away
             else
               false
             end
@@ -800,9 +903,14 @@ defmodule Gateway.Group do
                        Enum.reduce(state.members, [], fn id, acc ->
                          case GenRegistry.lookup(Gateway.Session, id) do
                            {:ok, pid} ->
-                             session_state = :sys.get_state(pid)
+                             session_state =
+                               try do
+                                 :sys.get_state(pid)
+                               catch
+                                 :exit, _ -> nil
+                               end
 
-                             if Process.alive?(pid) do
+                             if Process.alive?(pid) and session_state != nil do
                                [
                                  %{
                                    name: session_state.name,

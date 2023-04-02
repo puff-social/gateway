@@ -336,23 +336,35 @@ defmodule Gateway.Socket.Handler do
           case GenRegistry.lookup(Gateway.Session, data["d"]["session_id"]) do
             {:ok, session_pid} ->
               if session_pid != nil do
-                session_state = :sys.get_state(session_pid)
+                session_state =
+                  try do
+                    :sys.get_state(session_pid)
+                  catch
+                    :exit, _ -> nil
+                  end
 
-                if session_state.session_token == data["d"]["session_token"] do
-                  GenServer.cast(session_pid, {:link_socket_without_init, self()})
-
+                if session_state == nil do
                   send(
-                    self(),
-                    {:send_event, :SESSION_RESUMED, %{session_id: session_state.session_id}}
+                    state.linked_socket,
+                    {:send_event, :INTERNAL_ERROR, %{code: "SESSION_STATE_TIMEOUT"}}
                   )
-
-                  send(self(), {:set_new_session, session_pid, session_state.session_id})
-                  GenServer.stop(state.linked_session, :normal)
-
-                  {:noreply, state}
                 else
-                  send(self(), {:remote_close, 4001, "INVALID_RESUME_SESSION"})
-                  {:noreply, state}
+                  if session_state.session_token == data["d"]["session_token"] do
+                    GenServer.cast(session_pid, {:link_socket_without_init, self()})
+
+                    send(
+                      self(),
+                      {:send_event, :SESSION_RESUMED, %{session_id: session_state.session_id}}
+                    )
+
+                    send(self(), {:set_new_session, session_pid, session_state.session_id})
+                    GenServer.stop(state.linked_session, :normal)
+
+                    {:noreply, state}
+                  else
+                    send(self(), {:remote_close, 4001, "INVALID_RESUME_SESSION"})
+                    {:noreply, state}
+                  end
                 end
               else
                 send(self(), {:remote_close, 4001, "INVALID_RESUME_SESSION"})
