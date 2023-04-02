@@ -716,19 +716,23 @@ defmodule Gateway.Group do
   end
 
   def handle_cast({:stop_group_heat, _session_id}, state) do
-    new_state = %{state | state: "chilling", ready: []}
+    if state.state == "seshing" do
+      {:noreply, state}
+    else
+      new_state = %{state | state: "chilling", ready: []}
 
-    for member <- state.members do
-      case GenRegistry.lookup(Gateway.Session, member) do
-        {:ok, pid} ->
-          GenServer.cast(pid, {:send_group_update, new_state})
+      for member <- state.members do
+        case GenRegistry.lookup(Gateway.Session, member) do
+          {:ok, pid} ->
+            GenServer.cast(pid, {:send_group_update, new_state})
 
-        {:error, :not_found} ->
-          nil
+          {:error, :not_found} ->
+            nil
+        end
       end
-    end
 
-    {:noreply, new_state}
+      {:noreply, new_state}
+    end
   end
 
   def handle_cast({:join_group, session_state, session_pid}, state) do

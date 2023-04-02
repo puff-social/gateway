@@ -194,10 +194,19 @@ defmodule Gateway.Socket.Handler do
 
         group_visibility = data["d"]["visibility"] || "private"
 
-        GenServer.cast(
-          state.linked_session,
-          {:create_group, group_id, group_name, group_visibility}
-        )
+        case Hammer.check_rate("create_group:#{state.session_id}", 30_000, 1) do
+          {:allow, _count} ->
+            GenServer.cast(
+              state.linked_session,
+              {:create_group, group_id, group_name, group_visibility}
+            )
+
+          {:deny, _limit} ->
+            send(
+              self(),
+              {:send_event, :RATE_LIMITED}
+            )
+        end
 
       # Send device state
       4 ->
