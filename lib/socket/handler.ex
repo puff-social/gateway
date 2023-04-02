@@ -265,7 +265,16 @@ defmodule Gateway.Socket.Handler do
 
       # Inquire heating
       8 ->
-        GenServer.cast(state.linked_session, {:inquire_group_heat})
+        case Hammer.check_rate("inquire_heat:#{state.session_id}", 10_000, 3) do
+          {:allow, _count} ->
+            GenServer.cast(state.linked_session, {:inquire_group_heat})
+
+          {:deny, _limit} ->
+            send(
+              self(),
+              {:send_event, :RATE_LIMITED}
+            )
+        end
 
       # Start with ready
       9 ->
