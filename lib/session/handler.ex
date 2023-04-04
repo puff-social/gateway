@@ -746,6 +746,8 @@ defmodule Gateway.Session do
           {:noreply, new_state}
       end
     end
+
+    {:noreply, new_state}
   end
 
   def handle_cast({:set_session_away_state, away_state}, state) do
