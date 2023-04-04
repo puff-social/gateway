@@ -26,6 +26,8 @@ Elixir realtime gateway that enables realtime synchronization of group sessions 
 | `17`   | Kick member from group   | `C > S`   |
 | `18`   | Change our away state    | `C > S`   |
 | `19`   | Set current strain       | `C > S`   |
+| `20`   | Link user to session     | `C > S`   |
+| `21`   | Set session as mobile    | `C > S`   |
 | `420`  | Heartbeat                | `C > S`   |
 
 ## Events (Op: 3)
@@ -56,4 +58,5 @@ Elixir realtime gateway that enables realtime synchronization of group sessions 
 | `GROUP_USER_KICKED`            | Sent to a single group member when they're kicked from a group           |
 | `GROUP_USER_AWAY_STATE`        | Sent to all group members when OP 18 is sent by any member               |
 | `RATE_LIMITED`                 | Sent to a user when they've reached any rate limit bucket                |
+| `INTERNAL_ERROR`               | Sent to a user when they cause an internal error on the gateway          |
 | `SESSION_RESUMED`              | Sent in response to OP 13 when session is resumed successfully           |

@@ -919,6 +919,7 @@ defmodule Gateway.Group do
                                    away: session_state.away,
                                    group_joined: session_state.group_joined,
                                    disconnected: session_state.disconnected,
+                                   mobile: session_state.mobile,
                                    strain: session_state.strain,
                                    user: session_state.user
                                  }

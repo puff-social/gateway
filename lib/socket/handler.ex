@@ -567,6 +567,10 @@ defmodule Gateway.Socket.Handler do
           )
         end
 
+      # Set a sessions mobile state
+      21 ->
+        GenServer.cast(state.linked_session, {:set_session_mobile})
+
       _ ->
         nil
     end

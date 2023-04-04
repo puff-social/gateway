@@ -14,6 +14,7 @@ defmodule Gateway.Session do
             device_state: nil,
             session_token: nil,
             disconnected: nil,
+            mobile: nil,
             user: %{
               id: nil,
               name: nil,
@@ -34,6 +35,7 @@ defmodule Gateway.Session do
             device_state: device_state,
             session_token: session_token,
             disconnected: disconnected,
+            mobile: mobile,
             user: user
           },
           opts
@@ -50,6 +52,7 @@ defmodule Gateway.Session do
           "device_state" => device_state,
           "session_token" => session_token,
           "disconnected" => disconnected,
+          "mobile" => mobile,
           "user" => user
         },
         opts
@@ -78,6 +81,7 @@ defmodule Gateway.Session do
        device_state: %{},
        session_token: session_token,
        disconnected: false,
+       mobile: false,
        user: nil
      }, {:continue, :setup_session}}
   end
@@ -188,6 +192,7 @@ defmodule Gateway.Session do
                        away: session_state.away,
                        group_joined: session_state.group_joined,
                        disconnected: session_state.disconnected,
+                       mobile: session_state.mobile,
                        strain: session_state.strain,
                        user: session_state.user
                      }
@@ -724,6 +729,22 @@ defmodule Gateway.Session do
       {:error, :not_found} ->
         send(state.linked_socket, {:send_event, :GROUP_ACTION_ERROR, %{code: "NOT_IN_GROUP"}})
         {:noreply, state}
+    end
+  end
+
+  def handle_cast({:set_session_mobile}, state) do
+    new_state = %{state | mobile: true}
+
+    if state.group_id != nil do
+      case GenRegistry.lookup(Gateway.Group, state.group_id) do
+        {:ok, pid} ->
+          GenServer.cast(pid, {:group_user_update, state.session_id, new_state})
+          {:noreply, new_state}
+
+        {:error, :not_found} ->
+          send(state.linked_socket, {:send_event, :GROUP_ACTION_ERROR, %{code: "NOT_IN_GROUP"}})
+          {:noreply, new_state}
+      end
     end
   end
 
