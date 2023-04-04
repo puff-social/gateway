@@ -222,6 +222,8 @@ defmodule Gateway.Session do
          session_id: session.session_id,
          name: session.name,
          away: session.away,
+         disconnected: session.disconnected,
+         mobile: session.mobile,
          strain: session.strain,
          user: session.user
        }}
