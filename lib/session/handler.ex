@@ -814,7 +814,8 @@ defmodule Gateway.Session do
       {:noreply,
        %{
          state
-         | device_state:
+         | disconnected: false,
+           device_state:
              Map.merge(
                state.device_state,
                device_state |> Map.new(fn {k, v} -> {String.to_atom(k), v} end)
