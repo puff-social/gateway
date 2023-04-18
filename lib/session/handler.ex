@@ -156,6 +156,17 @@ defmodule Gateway.Session do
     {:noreply, new_state}
   end
 
+  def handle_cast({:reconnect}, state) do
+    new_state = %{state | disconnected: false}
+
+    if state.group_id != nil do
+      {:ok, group_pid} = GenRegistry.lookup(Gateway.Group, state.group_id)
+      GenServer.cast(group_pid, {:group_user_update, state.session_id, new_state})
+    end
+
+    {:noreply, new_state}
+  end
+
   def handle_cast({:send_join, group_state}, state) do
     send(
       state.linked_socket,
@@ -781,6 +792,10 @@ defmodule Gateway.Session do
   def handle_cast({:update_device_state, device_state}, state) when state.group_id != nil do
     {:ok, group_pid} = GenRegistry.lookup(Gateway.Group, state.group_id)
 
+    if state.disconnected do
+      GenServer.cast(self(), {:reconnect})
+    end
+
     group_state =
       try do
         :sys.get_state(group_pid)
@@ -796,7 +811,7 @@ defmodule Gateway.Session do
         {:group_user_device_update, state.session_id, device_state}
       )
 
-      if !state.away and !state.disconnected do
+      if !state.away do
         cond do
           group_state.state == "awaiting" and device_state["state"] == 6 ->
             GenServer.cast(group_pid, {:group_user_ready, state.session_id})
@@ -814,8 +829,7 @@ defmodule Gateway.Session do
       {:noreply,
        %{
          state
-         | disconnected: false,
-           device_state:
+         | device_state:
              Map.merge(
                state.device_state,
                device_state |> Map.new(fn {k, v} -> {String.to_atom(k), v} end)
