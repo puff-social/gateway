@@ -7,7 +7,7 @@ defmodule Gateway.Group.Generator do
 
   @nouns ~w(
     Dream Kush Wowie Goat Widow Express Pebbles Diesel
-    Fritter Herer Crack Banner Monkey Cookies Posion Cake
+    Fritter Herer Crack Banner Monkey Cookies Poison Cake
   )
 
   def generateName() do
