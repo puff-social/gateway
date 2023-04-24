@@ -813,9 +813,6 @@ defmodule Gateway.Session do
 
       if !state.away do
         cond do
-          group_state.state == "chilling" and device_state["state"] == 11 ->
-            GenServer.cast(group_pid, {:inquire_group_heat, state.session_id})
-
           group_state.state == "awaiting" and device_state["state"] == 6 ->
             GenServer.cast(group_pid, {:group_user_ready, state.session_id})
 
