@@ -811,13 +811,14 @@ defmodule Gateway.Session do
         {:group_user_device_update, state.session_id, device_state}
       )
 
-      if !state.away do
+      if !state.away and device_state != %{} do
         cond do
           group_state.state == "awaiting" and device_state["state"] == 6 ->
             GenServer.cast(group_pid, {:group_user_ready, state.session_id})
 
           group_state.state == "seshing" and device_state["state"] == 5 and
-              (state.device_state.state == 8 or state.device_state.state == 7) ->
+              ((Map.has_key?(state.device_state, :state) and state.device_state.state == 8) or
+                 state.device_state.state == 7) ->
             GenServer.cast(group_pid, {:increment_sesh_counter})
             GenServer.cast(group_pid, {:set_group_state, "chilling"})
 
