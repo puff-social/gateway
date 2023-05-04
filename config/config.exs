@@ -3,7 +3,7 @@ use Mix.Config
 config :gateway,
   port: String.to_integer(System.get_env("PORT") || "9000"),
   metrics_port: String.to_integer(System.get_env("METRICS_PORT") || "9001"),
-  redis_uri: System.get_env("REDIS_URI") || "redis://redis:6379",
+  redis_uri: System.get_env("REDIS_URI") || "redis://10.8.0.3:6379/5",
   internal_api: System.get_env("INTERNAL_API") || "http://127.0.0.1:8002"
 
 config :hammer,

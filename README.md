@@ -4,31 +4,31 @@ Elixir realtime gateway that enables realtime synchronization of group sessions 
 
 ## Opcodes
 
-| Code   | Name                     | Direction |
-| ------ | ------------------------ | --------- |
-| `0`    | Hello                    | `S > C`   |
-| `1`    | Join Group               | `C > S`   |
-| `2`    | Create Group             | `C > S`   |
-| `3`    | Event                    | `S > C`   |
-| `4`    | Send Device State        | `C > S`   |
-| `5`    | Edit Group               | `C > S`   |
-| `6`    | Update User              | `C > S`   |
-| `7`    | Leave Group              | `C > S`   |
-| `8`    | Inquire Group Heat       | `C > S`   |
-| `9`    | Start with ready members | `C > S`   |
-| `10`   | Disconnect device        | `C > S`   |
-| `11`   | Send message to group    | `C > S`   |
-| `12`   | End awaiting state       | `C > S`   |
-| `13`   | Resume active session    | `C > S`   |
-| `14`   | Send reaction to group   | `C > S`   |
-| `15`   | Delete Group             | `C > S`   |
-| `16`   | Transfer group ownership | `C > S`   |
-| `17`   | Kick member from group   | `C > S`   |
-| `18`   | Change our away state    | `C > S`   |
-| `19`   | Set current strain       | `C > S`   |
-| `20`   | Link user to session     | `C > S`   |
-| `21`   | Set session as mobile    | `C > S`   |
-| `420`  | Heartbeat                | `C > S`   |
+| Code   | Name                         | Direction |
+| ------ | ---------------------------- | --------- |
+| `0`    | Hello                        | `S > C`   |
+| `1`    | Join Group                   | `C > S`   |
+| `2`    | Create Group                 | `C > S`   |
+| `3`    | Event                        | `S > C`   |
+| `4`    | Send Device State            | `C > S`   |
+| `5`    | Edit Group                   | `C > S`   |
+| `6`    | Update User **(DEPRECATED)** | `C > S`   |
+| `7`    | Leave Group                  | `C > S`   |
+| `8`    | Inquire Group Heat           | `C > S`   |
+| `9`    | Start with ready members     | `C > S`   |
+| `10`   | Disconnect device            | `C > S`   |
+| `11`   | Send message to group        | `C > S`   |
+| `12`   | End awaiting state           | `C > S`   |
+| `13`   | Resume active session        | `C > S`   |
+| `14`   | Send reaction to group       | `C > S`   |
+| `15`   | Delete Group                 | `C > S`   |
+| `16`   | Transfer group ownership     | `C > S`   |
+| `17`   | Kick member from group       | `C > S`   |
+| `18`   | Change our away state        | `C > S`   |
+| `19`   | Set current strain           | `C > S`   |
+| `20`   | Link user to session         | `C > S`   |
+| `21`   | Set session as mobile        | `C > S`   |
+| `420`  | Heartbeat                    | `C > S`   |
 
 ## Events (Op: 3)
 
@@ -58,5 +58,7 @@ Elixir realtime gateway that enables realtime synchronization of group sessions 
 | `GROUP_USER_KICKED`            | Sent to a single group member when they're kicked from a group           |
 | `GROUP_USER_AWAY_STATE`        | Sent to all group members when OP 18 is sent by any member               |
 | `RATE_LIMITED`                 | Sent to a user when they've reached any rate limit bucket                |
+| `SYNTAX_ERROR`                 | Sent to a user when they send invalid data to the gateway                |
+| `OPCODE_DEPRECATED`            | Sent to a user when they send a deprecated opcode to the gateway         |
 | `INTERNAL_ERROR`               | Sent to a user when they cause an internal error on the gateway          |
 | `SESSION_RESUMED`              | Sent in response to OP 13 when session is resumed successfully           |

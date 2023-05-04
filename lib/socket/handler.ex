@@ -239,34 +239,12 @@ defmodule Gateway.Socket.Handler do
           )
         end
 
-      # Update user
+      # Update user (DEPRECATED)
       6 ->
-        if data["d"] != nil and is_map(data["d"]) do
-          if data["d"]["name"] != nil and String.length(data["d"]["name"]) > 32 do
-            send(
-              self(),
-              {:send_event, :USER_UPDATE_ERROR, %{code: "INVALID_NAME"}}
-            )
-
-            :ok
-          else
-            case Hammer.check_rate("user_update:#{state.session_id}", 30_000, 5) do
-              {:allow, _count} ->
-                GenServer.cast(state.linked_session, {:update_session_state, data["d"]})
-
-              {:deny, _limit} ->
-                send(
-                  self(),
-                  {:send_event, :RATE_LIMITED}
-                )
-            end
-          end
-        else
-          send(
-            self(),
-            {:send_event, :SYNTAX_ERROR, %{code: "MISSING_DATA"}}
-          )
-        end
+        send(
+          self(),
+          {:send_event, :OPCODE_DEPRECATED, %{code: "DEPRECATED"}}
+        )
 
       # Leave group
       7 ->

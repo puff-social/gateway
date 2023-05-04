@@ -383,6 +383,14 @@ defmodule Gateway.Session do
     if state.group_id != nil do
       {:ok, group} = GenRegistry.lookup(Gateway.Group, state.group_id)
       GenServer.cast(group, {:group_user_device_disconnect, state.session_id})
+
+      if Map.has_key?(state.device_state, :deviceMac) do
+        Redix.command(:redix, [
+          "DEL",
+          "puff-device/presence/#{state.device_state.deviceMac}"
+        ])
+      end
+
       {:noreply, %{state | device_state: %{}, away: false}}
     else
       {:noreply, state}
@@ -623,6 +631,13 @@ defmodule Gateway.Session do
   end
 
   def handle_cast({:leave_group}, state) do
+    if Map.has_key?(state.device_state, :deviceMac) do
+      Redix.command(:redix, [
+        "DEL",
+        "puff-device/presence/#{state.device_state.deviceMac}"
+      ])
+    end
+
     case GenRegistry.lookup(Gateway.Group, state.group_id) do
       {:ok, pid} ->
         group_state =
@@ -752,6 +767,16 @@ defmodule Gateway.Session do
       case GenRegistry.lookup(Gateway.Group, state.group_id) do
         {:ok, pid} ->
           GenServer.cast(pid, {:group_user_update, state.session_id, new_state})
+
+          if Map.has_key?(state.device_state, :deviceMac) do
+            Redix.command(:redix, [
+              "HSET",
+              "puff-device/presence/#{state.device_state.deviceMac}",
+              "mobile",
+              "true"
+            ])
+          end
+
           {:noreply, new_state}
 
         {:error, :not_found} ->
@@ -768,6 +793,16 @@ defmodule Gateway.Session do
       {:ok, pid} ->
         GenServer.cast(pid, {:group_user_away_change, state.session_id, away_state})
         new_state = %{state | away: away_state}
+
+        if Map.has_key?(state.device_state, :deviceMac) do
+          Redix.command(:redix, [
+            "HSET",
+            "puff-device/presence/#{state.device_state.deviceMac}",
+            "away",
+            "#{away_state}"
+          ])
+        end
+
         {:noreply, new_state}
 
       {:error, :not_found} ->
@@ -810,6 +845,23 @@ defmodule Gateway.Session do
         group_pid,
         {:group_user_device_update, state.session_id, device_state}
       )
+
+      if device_state["deviceMac"] != nil do
+        Redix.command(:redix, [
+          "HSET",
+          "puff-device/presence/#{device_state["deviceMac"]}",
+          "session_id",
+          "#{state.session_id}",
+          "user_id",
+          "#{state.user["id"]}",
+          "group_id",
+          "#{state.group_id}",
+          "away",
+          "#{state.away}",
+          "mobile",
+          "#{state.mobile}"
+        ])
+      end
 
       if !state.away and device_state != %{} do
         cond do
@@ -858,7 +910,7 @@ defmodule Gateway.Session do
       if group_state.owner_session_id != state.session_id do
         send(state.linked_socket, {:send_event, :GROUP_ACTION_ERROR, %{code: "NOT_OWNER"}})
       else
-        GenServer.cast(group_pid, {:update_channel_state, group_data, state.session_id})
+        GenServer.cast(group_pid, {:update_group_state, group_data, state.session_id})
       end
     end
 
@@ -870,17 +922,6 @@ defmodule Gateway.Session do
     GenServer.cast(group_pid, {:start_group_heat})
 
     {:noreply, state}
-  end
-
-  def handle_cast({:update_session_state, session_data}, state) do
-    new_state = Map.merge(state, session_data |> Map.new(fn {k, v} -> {String.to_atom(k), v} end))
-
-    if state.group_id != nil do
-      {:ok, group_pid} = GenRegistry.lookup(Gateway.Group, state.group_id)
-      GenServer.cast(group_pid, {:group_user_update, state.session_id, new_state})
-    end
-
-    {:noreply, new_state}
   end
 
   def handle_cast({:send_public_groups}, state) do

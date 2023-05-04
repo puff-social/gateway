@@ -211,7 +211,7 @@ defmodule Gateway.Group do
     {:noreply, new_state}
   end
 
-  def handle_cast({:update_channel_state, updated_state, session_id}, state) do
+  def handle_cast({:update_group_state, updated_state, session_id}, state) do
     new_state =
       Map.merge(state, updated_state |> Map.new(fn {k, v} -> {String.to_atom(k), v} end))
 
