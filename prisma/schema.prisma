@@ -1,0 +1,123 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model feedback {
+  id      String @id
+  message String
+  ip      String
+}
+
+model users {
+  id           String        @id
+  name         String
+  display_name String?
+  image        String?
+  banner       String?
+  flags        Int           @default(0)
+  bio          String?
+  accounts     accounts[]
+  connections  connections[]
+  devices      devices[]
+  sessions     sessions[]
+}
+
+model diagnostics {
+  id                      String    @id(map: "diag_pkey")
+  device_name             String
+  device_firmware         String
+  device_git_hash         String?
+  device_uptime           Int?
+  device_utc_time         Int?
+  device_battery_capacity Int?
+  device_model            String
+  device_uid              String?
+  device_chamber_type     Int?      @db.SmallInt
+  device_dob              DateTime? @db.Timestamp(6)
+  device_profiles         Json?
+  device_services         Json[]
+  lorax                   Boolean   @default(false)
+  pup                     Boolean   @default(false)
+  authenticated           Boolean   @default(false)
+  user_agent              String
+  ip                      String
+  session_id              String?
+  device_serial_number    String?
+  device_hardware_version String?
+  device_mac              String?
+}
+
+model strains {
+  id       String  @id
+  name     String?
+  slug     String?
+  platform String?
+  species  String?
+  thc      String?
+  cbd      String?
+}
+
+model device_leaderboard {
+  id           String  @id
+  position     Int
+  avg_position Int?
+  devices      devices @relation(fields: [id], references: [id], onDelete: Cascade)
+}
+
+model devices {
+  id                 String              @id
+  mac                String              @unique(map: "mac_unq")
+  name               String              @default("N/A")
+  dabs               Int
+  avg_dabs           Float               @default(0.0) @db.Real
+  model              String              @default("0")
+  firmware           String
+  hardware           Int
+  git_hash           String
+  serial_number      String?
+  dob                DateTime            @db.Timestamp(6)
+  last_active        DateTime            @default(now()) @db.Timestamp(6)
+  last_ip            String?
+  user_id            String?
+  profiles           Json?
+  device_leaderboard device_leaderboard?
+  users              users?              @relation(fields: [user_id], references: [id], onDelete: Cascade)
+}
+
+model accounts {
+  id       String     @id
+  email    String     @unique(map: "email_unq")
+  password String
+  user_id  String
+  users    users      @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  sessions sessions[]
+}
+
+model connections {
+  id          String     @id
+  platform    String     @default("discord")
+  platform_id String?
+  user_id     String
+  verified    Boolean    @default(false)
+  users       users      @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  sessions    sessions[]
+
+  @@unique([platform, platform_id], map: "platform_acc_unq")
+}
+
+model sessions {
+  user_id       String
+  connection_id String?
+  account_id    String?
+  user_agent    String
+  ip            String
+  token         String       @id(map: "sess_pkey")
+  accounts      accounts?    @relation(fields: [account_id], references: [id], onDelete: Cascade)
+  connections   connections? @relation(fields: [connection_id], references: [id], onDelete: Cascade)
+  users         users        @relation(fields: [user_id], references: [id], onDelete: Cascade)
+}

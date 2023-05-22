@@ -1,0 +1,41 @@
+name: ci
+concurrency:
+  group: production
+  cancel-in-progress: true
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  docker-push:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v1
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+      - name: Build and push
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          push: true
+          tags: ghcr.io/dustinrouillard/puffsocial/gateway:latest,ghcr.io/dustinrouillard/puffsocial/gateway:${{ github.sha }}
+
+      - uses: actions/checkout@master
+      - name: Deploy to cluster
+        uses: danielr1996/kubectl-action@1.0.0
+        with:
+          kubeconfig: ${{ secrets.KUBECONFIG }}
+          args: set image --record deployment/puffsocial-gateway app=ghcr.io/dustinrouillard/puffsocial/gateway:${{ github.sha }}
+
+      - name: Verify deployment
+        uses: danielr1996/kubectl-action@1.0.0
+        with:
+          kubeconfig: ${{ secrets.KUBECONFIG }}
+          args: rollout status deployment/puffsocial-gateway
