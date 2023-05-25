@@ -23,6 +23,7 @@ import { KickMember } from "./methods/KickMember";
 import { SendMessage } from "./methods/SendMessage";
 import { DisconnectDevice } from "./methods/DisconnectDevice";
 import { UpdateState } from "./methods/UpdateState";
+import { ResumeSession } from "./methods/ResumeSession";
 
 export interface Session {
   id: string;
@@ -82,8 +83,10 @@ export class Session extends EventEmitter {
     this.socket.send(JSON.stringify({ op: head.op, t: head.event, d: data }));
   }
 
-  close() {
+  close(code?: number, reason?: string) {
     if (this.group_id) LeaveGroup.bind(this)();
+    if (this.socket.readyState == this.socket.OPEN)
+      this.socket.close(code, reason);
   }
 
   private async handle(data: SocketMessage) {
@@ -133,7 +136,7 @@ export class Session extends EventEmitter {
         break;
       }
       case Op.ResumeSession: {
-        console.log("User resumed session");
+        ResumeSession.bind(this, data.d)();
         break;
       }
       case Op.SendReaction: {

@@ -8,3 +8,8 @@ export const stateUpdate = z
   })
   .partial()
   .strip();
+
+export const resumeSession = z.object({
+  session_id: z.string().uuid(),
+  session_token: z.string(),
+});

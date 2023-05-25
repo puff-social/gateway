@@ -5,8 +5,15 @@ import { IncomingMessage, ServerResponse, createServer } from "http";
 
 import { env } from "./env";
 import { Session } from "./session";
-import { Sessions, getGroup, getSessionByUserId, publicGroups } from "./data";
+import {
+  Groups,
+  Sessions,
+  getGroup,
+  getSessionByUserId,
+  publicGroups,
+} from "./data";
 import { users } from "@prisma/client";
+import { Event, Op } from "@puff-social/commons";
 
 const internal = fastify();
 const server = createServer();
@@ -19,9 +26,38 @@ wss.on("connection", (socket) => {
   console.log("Got new socket connection", session.id);
 
   socket.on("close", (code, reason) => {
-    console.log(`Socket session closed ${session.id} - ${code} - ${reason}`);
-    session.close();
-    Sessions.delete(session.id);
+    console.log(
+      `Socket session was closed attached to session ${session.id} ( ${code} - ${reason} )`
+    );
+    session.disconnected = true;
+
+    if (session.group_id) {
+      const group = Groups.get(session.group_id);
+
+      if (group)
+        group?.broadcast(
+          { op: Op.Event, event: Event.GroupUserUpdate },
+          {
+            group_id: group.id,
+            session_id: session.id,
+            disconnected: session.disconnected,
+          }
+        );
+    }
+
+    setTimeout(() => {
+      if (session.socket.readyState != session.socket.OPEN) {
+        console.log(
+          `Waited 10 seconds for session ${session.id}, it's no longer connected and is being closed`
+        );
+        session.close();
+        Sessions.delete(session.id);
+      } else {
+        console.log(
+          `Waited 10 seconds for session ${session.id} and it still has a connected socket.`
+        );
+      }
+    }, 10 * 1000);
   });
 });
 
