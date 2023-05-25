@@ -1,8 +1,8 @@
 import { Event, Op } from "@puff-social/commons";
+import { keydb } from "@puff-social/commons/dist/connectivity/keydb";
 
 import { Session } from "..";
 import { Groups } from "../../data";
-import { keydb } from "@puff-social/commons/dist/connectivity/keydb";
 
 export async function DisconnectDevice(this: Session) {
   try {

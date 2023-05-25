@@ -5,6 +5,7 @@ import { DeviceState } from "@puff-social/commons/dist/puffco/constants";
 import { v4 } from "uuid";
 import EventEmitter from "events";
 import { WebSocket } from "ws";
+
 import { generateString } from "../util";
 import { SocketMessage } from "../types/Socket";
 import { LinkUser } from "./methods/LinkUser";
@@ -26,6 +27,7 @@ import { UpdateState } from "./methods/UpdateState";
 import { ResumeSession } from "./methods/ResumeSession";
 import { checkRateLimit } from "../ratelimit";
 import { Heartbeat } from "./methods/Heartbeat";
+import { Groups } from "../data";
 
 export interface Session {
   id: string;
@@ -109,6 +111,17 @@ export class Session extends EventEmitter {
     if (this.socket.readyState == this.socket.OPEN)
       this.socket.close(code, reason);
     if (this.alive_timer) clearInterval(this.alive_timer);
+  }
+
+  updateUser(user: users) {
+    this.user = user;
+
+    if (!this.group_id) return;
+    const group = Groups.get(this.group_id);
+    group?.broadcast(
+      { op: Op.Event, event: Event.GroupUserUpdate },
+      { session_id: this.id, group_id: group.id, user: this.user }
+    );
   }
 
   private handlers: {

@@ -1,6 +1,8 @@
 import { Server } from "ws";
-import fastify, { FastifyRequest } from "fastify";
 import Route from "route-parser";
+import { users } from "@prisma/client";
+import { Event, Op } from "@puff-social/commons";
+import fastify, { FastifyRequest } from "fastify";
 import { IncomingMessage, ServerResponse, createServer } from "http";
 
 import { env } from "./env";
@@ -12,8 +14,6 @@ import {
   getSessionByUserId,
   publicGroups,
 } from "./data";
-import { users } from "@prisma/client";
-import { Event, Op } from "@puff-social/commons";
 
 const internal = fastify();
 const server = createServer();
@@ -158,7 +158,7 @@ internal.post(
     const session = getSessionByUserId(req.params.id);
     if (!session) return res.status(204).send();
 
-    session.user = req.body;
+    session.updateUser(req.body);
 
     return res.status(204).send();
   }

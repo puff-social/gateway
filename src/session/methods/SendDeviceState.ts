@@ -1,7 +1,3 @@
-import { Event, Op } from "@puff-social/commons";
-
-import { Session } from "..";
-import { Groups } from "../../data";
 import {
   ChamberType,
   ChargeSource,
@@ -9,8 +5,12 @@ import {
   DeviceState,
   GatewayDeviceProfile,
 } from "@puff-social/commons/dist/puffco";
-import { deviceUpdate } from "../../validators/device";
 import { keydb } from "@puff-social/commons/dist/connectivity/keydb";
+import { Event, Op } from "@puff-social/commons";
+
+import { Session } from "..";
+import { Groups } from "../../data";
+import { deviceUpdate } from "../../validators/device";
 import { StartWithReady } from "./StartWithReady";
 
 interface Data {

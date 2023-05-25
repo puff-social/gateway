@@ -1,16 +1,17 @@
 import { Event, Op } from "@puff-social/commons";
+
 import { Group } from "./group";
 import { Session } from "./session";
 
 export const Groups = new Map<string, Group>();
 export const Sessions = new Map<string, Session>();
 
-export function getSessionByUserId(id: string) {
+export function getSessionByUserId(target: string) {
   for (const { id } of Array.from(Sessions, ([, { id }]) => ({
     id,
   }))) {
     const session = Sessions.get(id);
-    if (session?.user?.id == id) return session;
+    if (session?.user?.id == target) return session;
   }
 }
 
