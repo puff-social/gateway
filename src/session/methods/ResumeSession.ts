@@ -18,7 +18,10 @@ export async function ResumeSession(this: Session, data: Data) {
 
   const session = Sessions.get(data.session_id);
   if (!session || data.session_token != session.token)
-    return this.close(4001, "INVALID_RESUME_SESSION");
+    return this.send(
+      { op: Op.Event, event: Event.SessionResumeError },
+      { code: "INVALID_SESSION" }
+    );
 
   session.mobile = this.mobile;
   session.away = this.away;
@@ -32,6 +35,8 @@ export async function ResumeSession(this: Session, data: Data) {
   );
 
   Sessions.delete(this.id);
+
+  session.startAliveTimer();
 
   if (!this.group_id) return;
   const group = Groups.get(this.group_id);

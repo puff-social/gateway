@@ -25,6 +25,7 @@ import { DisconnectDevice } from "./methods/DisconnectDevice";
 import { UpdateState } from "./methods/UpdateState";
 import { ResumeSession } from "./methods/ResumeSession";
 import { checkRateLimit } from "../ratelimit";
+import { Heartbeat } from "./methods/Heartbeat";
 
 export interface Session {
   id: string;
@@ -38,6 +39,9 @@ export interface Session {
   group_id?: string;
   device_state?: DeviceState;
   user?: users;
+
+  alive_timer: NodeJS.Timer;
+  last_heartbeat: Date;
 
   socket: WebSocket;
 }
@@ -68,10 +72,26 @@ export class Session extends EventEmitter {
         d: {
           session_id: this.id,
           session_token: this.token,
-          heartbeat_interval: 5_000,
+          heartbeat_interval: 10_000,
         },
       })
     );
+
+    this.startAliveTimer();
+  }
+
+  startAliveTimer() {
+    this.last_heartbeat = new Date();
+    this.alive_timer = setInterval(() => {
+      if (new Date().getTime() - this.last_heartbeat.getTime() >= 15 * 1000) {
+        console.log(
+          "Socket has not sent a heartbeat for greater than 15 seconds"
+        );
+        if (this.socket.readyState == this.socket.OPEN)
+          console.log(this.socket.close(4002, "HEARTBEAT_NOT_RECEIVED"));
+        if (this.alive_timer) clearInterval(this.alive_timer);
+      }
+    }, 15 * 1000);
   }
 
   error(event: Event, data?: { code: string } | Record<string, any>) {
@@ -88,6 +108,7 @@ export class Session extends EventEmitter {
     if (this.group_id) LeaveGroup.bind(this)();
     if (this.socket.readyState == this.socket.OPEN)
       this.socket.close(code, reason);
+    if (this.alive_timer) clearInterval(this.alive_timer);
   }
 
   private handlers: {
@@ -256,6 +277,7 @@ export class Session extends EventEmitter {
     {
       name: "heartbeat",
       op: Op.Heartbeat,
+      func: Heartbeat,
     },
   ];
 
@@ -273,7 +295,12 @@ export class Session extends EventEmitter {
         this.id,
         handler.ratelimit
       );
-      if (!ratelimited) handler.func?.bind(this, data.d)();
+      if (ratelimited) handler.func?.bind(this, data.d)();
+      else
+        this.send(
+          { op: Op.Event, event: Event.RateLimited },
+          { op: handler.op }
+        );
     } else handler.func?.bind(this, data.d)();
   }
 }

@@ -9,7 +9,7 @@ export async function checkRateLimit(
 
   const count = await keydb.incr(redisKey);
   if (count === 1) {
-    await keydb.expire(redisKey, limit.interval);
+    await keydb.expire(redisKey, limit.interval / 1000);
   }
 
   return count <= limit.limit;
