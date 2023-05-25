@@ -3,7 +3,7 @@ import EventEmitter from "events";
 
 import { randomStrain } from "./utils";
 import { generateString } from "../util";
-import { Sessions } from "../data";
+import { Groups, Sessions, sendPublicGroups } from "../data";
 import { Session } from "../session";
 
 export interface Group {
@@ -27,9 +27,9 @@ export class Group extends EventEmitter {
   }) {
     super();
 
-    this.id = options.id || generateString(6, { lower: true, chars: false });
-    this.name = options.name || randomStrain();
-    this.visibility = options.visilibity || "private";
+    this.id = options.id ?? generateString(6, { lower: true, chars: false });
+    this.name = options.name ?? randomStrain();
+    this.visibility = options.visilibity ?? "private";
     this.state = "chilling";
     this.sesh_counter = 0;
     this.owner_session_id = options.owner;
@@ -100,6 +100,17 @@ export class Group extends EventEmitter {
       });
 
     return { seshers, watchers, away };
+  }
+
+  delete() {
+    this.broadcast(
+      { op: Op.Event, event: Event.GroupDelete },
+      { group_id: this.id }
+    );
+
+    Groups.delete(this.id);
+
+    sendPublicGroups();
   }
 
   broadcast(head: { op: Op; event?: Event; ignored?: string[] }, data?: any) {

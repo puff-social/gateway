@@ -36,5 +36,13 @@ export async function LeaveGroup(this: Session) {
         session_id: this.id,
       }
     );
+
+    // If no members after we leave, set a 30 second timer, then check again before deleting the group.
+    if (group.members.size == 0) {
+      setTimeout(() => {
+        console.log("Checking if group is empty", group.members.size);
+        if (group.members.size == 0) group.delete();
+      }, 30 * 1000);
+    }
   }
 }
