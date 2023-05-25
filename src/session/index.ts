@@ -253,6 +253,10 @@ export class Session extends EventEmitter {
       op: Op.SetMobile,
       deprecated: true,
     },
+    {
+      name: "heartbeat",
+      op: Op.Heartbeat,
+    },
   ];
 
   private async handle(data: SocketMessage) {
