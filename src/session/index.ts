@@ -82,6 +82,17 @@ export class Session extends EventEmitter {
     this.startAliveTimer();
   }
 
+  resume() {
+    this.socket.on("message", (message) => {
+      try {
+        const data = JSON.parse(message.toString());
+        this.handle(data);
+      } catch (error) {}
+    });
+
+    this.startAliveTimer();
+  }
+
   startAliveTimer() {
     this.last_heartbeat = new Date();
     this.alive_timer = setInterval(() => {

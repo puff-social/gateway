@@ -18,17 +18,33 @@ export async function ResumeSession(this: Session, data: Data) {
     );
 
   const session = Sessions.get(data.session_id);
+  console.log("Resuming session", session?.id);
+  if (data.session_token != session?.token)
+    console.log(
+      "Session tried to be resumed with invalid token",
+      data.session_token,
+      session?.token
+    );
   if (!session || data.session_token != session.token)
     return this.send(
       { op: Op.Event, event: Event.SessionResumeError },
       { code: "INVALID_SESSION" }
     );
 
+  console.log("Session", this.id, "is resuming session", session.id);
+
   session.mobile = this.mobile;
   session.away = this.away;
   session.token = this.token;
   session.socket = this.socket;
   session.disconnected = false;
+
+  if (session.alive_timer) clearInterval(session.alive_timer);
+  if (this.alive_timer) clearInterval(this.alive_timer);
+  session.socket.removeAllListeners();
+  this.socket.removeAllListeners();
+
+  session.resume();
 
   session.send(
     { op: Op.Event, event: Event.SessionResumed },
@@ -37,15 +53,13 @@ export async function ResumeSession(this: Session, data: Data) {
 
   Sessions.delete(this.id);
 
-  session.startAliveTimer();
-
-  if (!this.group_id) return;
-  const group = Groups.get(this.group_id);
+  if (!session.group_id) return;
+  const group = Groups.get(session.group_id);
   group?.broadcast(
     { op: Op.Event, event: Event.GroupUserUpdate },
     {
       group_id: group.id,
-      session_id: this.id,
+      session_id: session.id,
       disconnected: session.disconnected,
     }
   );
