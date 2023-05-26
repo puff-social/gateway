@@ -85,7 +85,7 @@ export async function SendDeviceState(this: Session, data: Data) {
     }
 
     group?.broadcast(
-      { op: Op.Event, event: Event.GroupUserDeviceUpdate },
+      { op: Op.Event, event: Event.GroupUserDeviceUpdate, ignored: [this.id] },
       {
         group_id: group.id,
         session_id: this.id,
