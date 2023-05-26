@@ -1,5 +1,5 @@
 import { users } from "@prisma/client";
-import { Op, Event } from "@puff-social/commons";
+import { Op, Event, VoiceChannelState } from "@puff-social/commons";
 import { DeviceState } from "@puff-social/commons/dist/puffco/constants";
 
 import { v4 } from "uuid";
@@ -40,6 +40,7 @@ export interface Session {
   strain?: string;
   group_id?: string;
   device_state?: DeviceState;
+  voice?: VoiceChannelState;
   user?: users;
 
   alive_timer: NodeJS.Timer;
@@ -97,11 +98,8 @@ export class Session extends EventEmitter {
     this.last_heartbeat = new Date();
     this.alive_timer = setInterval(() => {
       if (new Date().getTime() - this.last_heartbeat.getTime() >= 15 * 1000) {
-        console.log(
-          "Socket has not sent a heartbeat for greater than 15 seconds"
-        );
         if (this.socket.readyState == this.socket.OPEN)
-          console.log(this.socket.close(4002, "HEARTBEAT_NOT_RECEIVED"));
+          this.socket.close(4002, "HEARTBEAT_NOT_RECEIVED");
         if (this.alive_timer) clearInterval(this.alive_timer);
       }
     }, 15 * 1000);
@@ -131,7 +129,12 @@ export class Session extends EventEmitter {
     const group = Groups.get(this.group_id);
     group?.broadcast(
       { op: Op.Event, event: Event.GroupUserUpdate },
-      { session_id: this.id, group_id: group.id, user: this.user }
+      {
+        session_id: this.id,
+        group_id: group.id,
+        user: this.user,
+        voice: this.voice,
+      }
     );
   }
 
@@ -147,7 +150,7 @@ export class Session extends EventEmitter {
       op: Op.Join,
       func: JoinGroup,
       ratelimit: {
-        interval: 5000,
+        interval: 5 * 1000,
         limit: 2,
       },
     },

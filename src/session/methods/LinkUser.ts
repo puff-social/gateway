@@ -2,17 +2,18 @@ import { Event, Op } from "@puff-social/commons";
 
 import { Session } from "..";
 import { Groups } from "../../data";
-import { getUserByToken } from "../../helpers/hash";
+import { verifyByToken } from "../../helpers/hash";
 
 interface Data {
   token: string;
 }
 
 export async function LinkUser(this: Session, data: Data) {
-  const user = await getUserByToken(data.token);
-  if (!user) return;
+  const verified = await verifyByToken(data.token);
+  if (!verified) return;
 
-  this.user = user;
+  this.user = verified.user;
+  this.voice = verified.voice;
 
   this.send(
     { op: Op.Event, event: Event.UserLinkSuccess },
@@ -30,6 +31,7 @@ export async function LinkUser(this: Session, data: Data) {
       session_id: this.id,
       disconnected: this.disconnected,
       user: this.user,
+      voice: this.voice,
     }
   );
 }

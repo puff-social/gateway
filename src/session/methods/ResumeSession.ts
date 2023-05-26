@@ -18,20 +18,11 @@ export async function ResumeSession(this: Session, data: Data) {
     );
 
   const session = Sessions.get(data.session_id);
-  console.log("Resuming session", session?.id);
-  if (data.session_token != session?.token)
-    console.log(
-      "Session tried to be resumed with invalid token",
-      data.session_token,
-      session?.token
-    );
   if (!session || data.session_token != session.token)
     return this.send(
       { op: Op.Event, event: Event.SessionResumeError },
       { code: "INVALID_SESSION" }
     );
-
-  console.log("Session", this.id, "is resuming session", session.id);
 
   session.mobile = this.mobile;
   session.away = this.away;

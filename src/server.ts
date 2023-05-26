@@ -1,7 +1,7 @@
 import { Server } from "ws";
 import Route from "route-parser";
 import { users } from "@prisma/client";
-import { Event, Op } from "@puff-social/commons";
+import { Event, Op, VoiceChannelState } from "@puff-social/commons";
 import fastify, { FastifyRequest } from "fastify";
 import { IncomingMessage, ServerResponse, createServer } from "http";
 
@@ -47,15 +47,8 @@ wss.on("connection", (socket) => {
 
     setTimeout(() => {
       if (session.socket.readyState != session.socket.OPEN) {
-        console.log(
-          `Waited 10 seconds for session ${session.id}, it's no longer connected and is being closed`
-        );
         session.close();
         Sessions.delete(session.id);
-      } else {
-        console.log(
-          `Waited 10 seconds for session ${session.id} and it still has a connected socket.`
-        );
       }
     }, 10 * 1000);
   });
@@ -154,11 +147,18 @@ server.listen({ port: env.PORT, host: "0.0.0.0" }, () => {
 
 internal.post(
   "/user/:id/update",
-  async (req: FastifyRequest<{ Params: { id: string }; Body: users }>, res) => {
+  async (
+    req: FastifyRequest<{
+      Params: { id: string };
+      Body: { user: users; voice: VoiceChannelState };
+    }>,
+    res
+  ) => {
     const session = getSessionByUserId(req.params.id);
     if (!session) return res.status(204).send();
 
-    session.updateUser(req.body);
+    session.voice = req.body.voice;
+    session.updateUser(req.body.user);
 
     return res.status(204).send();
   }
