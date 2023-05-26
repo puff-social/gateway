@@ -56,6 +56,7 @@ export class Group extends EventEmitter {
           mobile: member.mobile,
           strain: member.strain,
           user: member.user,
+          voice: member.voice,
         };
       });
 
@@ -76,6 +77,7 @@ export class Group extends EventEmitter {
           mobile: member.mobile,
           strain: member.strain,
           user: member.user,
+          voice: member.voice,
         };
       });
 
@@ -96,6 +98,7 @@ export class Group extends EventEmitter {
           mobile: member.mobile,
           strain: member.strain,
           user: member.user,
+          voice: member.voice,
         };
       });
 
