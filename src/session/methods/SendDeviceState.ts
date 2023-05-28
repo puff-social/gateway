@@ -71,8 +71,9 @@ export async function SendDeviceState(this: Session, data: Data) {
           }
         );
 
-        const { seshers } = group.getMembers();
-        if (seshers.length == group.ready.length) StartWithReady.bind(this)();
+        const { seshers, away } = group.getMembers();
+        if (seshers.length - away.length == group.ready.length)
+          StartWithReady.bind(this)();
       } else if (group.state == "seshing" && validate.state == 7) {
         group.sesh_counter = group.sesh_counter + 1;
         group.ready = [];
