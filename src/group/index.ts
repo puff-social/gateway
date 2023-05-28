@@ -65,7 +65,8 @@ export class Group extends EventEmitter {
     const watchers = Array.from(this.members, ([, member]) => member)
       .filter((mem) => {
         const member = Sessions.get(mem.id);
-        if (!member || member.device_state) return false;
+        if (!member || (member.device_state && validState(member.device_state)))
+          return false;
         return true;
       })
       .map((mem) => {
