@@ -11,7 +11,7 @@ import {
   Groups,
   Sessions,
   getGroup,
-  getSessionByUserId,
+  getSessionsByUserId,
   publicGroups,
 } from "./data";
 
@@ -154,11 +154,15 @@ internal.post(
     }>,
     res
   ) => {
-    const session = getSessionByUserId(req.params.id);
-    if (!session) return res.status(204).send();
+    const sessions = getSessionsByUserId(req.params.id);
+    if (sessions.length == 0) return res.status(200).send("no");
 
-    session.voice = req.body.voice;
-    session.updateUser(req.body.user);
+    for (const session of sessions) {
+      if (req.body.user === null || req.body.user) session.user = req.body.user;
+      if (req.body.voice === null || req.body.voice)
+        session.voice = req.body.voice;
+      session.updateUser();
+    }
 
     return res.status(204).send();
   }

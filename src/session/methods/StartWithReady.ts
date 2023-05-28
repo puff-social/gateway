@@ -37,6 +37,7 @@ export async function StartWithReady(this: Session) {
         { op: Op.Event, event: Event.GroupHeatBegin },
         {
           session_id: this.id,
+          excluded: !group.ready.includes(session.id),
           watcher: !!watchers.find((mem) => mem.session_id == session.id),
           away: !!away.find((mem) => mem.session_id == session.id),
         }

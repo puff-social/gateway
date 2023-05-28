@@ -15,6 +15,20 @@ export function getSessionByUserId(target: string) {
   }
 }
 
+export function getSessionsByUserId(target: string) {
+  const sessions: Session[] = [];
+
+  for (const { id } of Array.from(Sessions, ([, { id }]) => ({
+    id,
+  }))) {
+    const session = Sessions.get(id);
+
+    if (session?.user?.id == target) sessions.push(session);
+  }
+
+  return sessions;
+}
+
 export function sendPublicGroups() {
   const groups = publicGroups();
 

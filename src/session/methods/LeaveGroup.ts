@@ -3,6 +3,7 @@ import { keydb } from "@puff-social/commons/dist/connectivity/keydb";
 
 import { Session } from "..";
 import { Groups } from "../../data";
+import { TransferGroupOwner } from "./TransferGroupOwner";
 
 export async function LeaveGroup(this: Session) {
   if (!this.group_id)
@@ -21,6 +22,14 @@ export async function LeaveGroup(this: Session) {
       group.ready = group.ready.filter((id) => id != this.id);
     }
 
+    group.broadcast(
+      { op: Op.Event, event: Event.GroupUserLeft },
+      {
+        group_id: group.id,
+        session_id: this.id,
+      }
+    );
+
     const { seshers, watchers } = group.getMembers();
     group.broadcast(
       { op: Op.Event, event: Event.GroupUpdate },
@@ -30,18 +39,13 @@ export async function LeaveGroup(this: Session) {
       }
     );
 
-    group.broadcast(
-      { op: Op.Event, event: Event.GroupUserLeft },
-      {
-        group_id: group.id,
-        session_id: this.id,
-      }
-    );
-
     if (group.members.size == 0) {
       setTimeout(() => {
         if (group.members.size == 0) group.delete();
       }, 30 * 1000);
+    } else if (group.owner_session_id == this.id) {
+      const [next] = Array.from(group.members)[0];
+      if (next) TransferGroupOwner.bind(this)({ session_id: next });
     }
   }
 }

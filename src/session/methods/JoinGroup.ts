@@ -42,6 +42,7 @@ export async function JoinGroup(this: Session, data: Data) {
       mobile: this.mobile,
       strain: this.strain,
       user: this.user,
+      voice: this.voice,
     }
   );
 

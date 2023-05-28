@@ -23,7 +23,7 @@ export async function KickMember(this: Session, data: Data) {
   if (!validate)
     return this.error(Event.GroupActionError, { code: "INVALID_DATA" });
 
-  if (group.owner_session_id != data.session_id)
+  if (group.owner_session_id == data.session_id)
     return this.error(Event.GroupActionError, { code: "CANNOT_KICK_OWNER" });
 
   if (this.id != group.owner_session_id)

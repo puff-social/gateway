@@ -116,15 +116,13 @@ export class Session extends EventEmitter {
   }
 
   close(code?: number, reason?: string) {
+    if (this.alive_timer) clearInterval(this.alive_timer);
     if (this.group_id) LeaveGroup.bind(this)();
     if (this.socket.readyState == this.socket.OPEN)
       this.socket.close(code, reason);
-    if (this.alive_timer) clearInterval(this.alive_timer);
   }
 
-  updateUser(user: users) {
-    this.user = user;
-
+  updateUser() {
     if (!this.group_id) return;
     const group = Groups.get(this.group_id);
     group?.broadcast(

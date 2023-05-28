@@ -117,13 +117,12 @@ export class Group extends EventEmitter {
   }
 
   broadcast(head: { op: Op; event?: Event; ignored?: string[] }, data?: any) {
-    for (const { id } of Array.from(this.members, ([, { id, joined }]) => ({
-      id,
-      joined,
-    }))) {
-      if (head.ignored?.includes(id)) return;
-      const session = Sessions.get(id);
-      session?.send(head, data);
-    }
+    this.members.forEach((member) => {
+      try {
+        if (head.ignored?.includes(member.id)) return;
+        const session = Sessions.get(member.id);
+        session?.send(head, data);
+      } catch (error) {}
+    });
   }
 }

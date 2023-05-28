@@ -43,6 +43,7 @@ export async function CreateGroup(this: Session, data: Data) {
       mobile: this.mobile,
       strain: this.strain,
       user: this.user,
+      voice: this.voice,
     }
   );
 

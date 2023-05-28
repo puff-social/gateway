@@ -19,9 +19,6 @@ export async function UpdateState(this: Session, data: Data) {
   if (!group)
     return this.error(Event.GroupActionError, { code: "NOT_IN_GROUP" });
 
-  if (this.id != group.owner_session_id)
-    return this.error(Event.GroupActionError, { code: "NOT_OWNER" });
-
   const validate = await stateUpdate.parseAsync(data);
 
   if (!validate)

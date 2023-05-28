@@ -58,7 +58,11 @@ export async function SendDeviceState(this: Session, data: Data) {
       });
 
     if (!this.away && "state" in validate) {
-      if (group.state == "awaiting" && validate.state == 6) {
+      if (
+        group.state == "awaiting" &&
+        validate.state == 6 &&
+        !group.ready.includes(this.id)
+      ) {
         group.ready = [...group.ready, this.id];
         group?.broadcast(
           { op: Op.Event, event: Event.GroupUpdate },
