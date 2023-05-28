@@ -23,7 +23,7 @@
   },
   "dependencies": {
     "@prisma/client": "4.14.1",
-    "@puff-social/commons": "^1.0.8",
+    "@puff-social/commons": "^1.0.10",
     "envsafe": "^2.0.3",
     "fastify": "^4.17.0",
     "route-parser": "^0.0.5",

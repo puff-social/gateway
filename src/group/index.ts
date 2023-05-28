@@ -5,6 +5,7 @@ import { randomStrain } from "./utils";
 import { generateString } from "../util";
 import { Groups, Sessions, sendPublicGroups } from "../data";
 import { Session } from "../session";
+import { validState } from "@puff-social/commons/dist/puffco";
 
 export interface Group {
   id: string;
@@ -42,7 +43,8 @@ export class Group extends EventEmitter {
     const seshers = Array.from(this.members, ([, member]) => member)
       .filter((mem) => {
         const member = Sessions.get(mem.id);
-        if (!member || !member.device_state) return false;
+        if (!member || !member.device_state || !validState(member.device_state))
+          return false;
         return true;
       })
       .map((mem) => {
