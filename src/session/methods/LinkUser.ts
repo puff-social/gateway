@@ -1,8 +1,9 @@
-import { Event, Op } from "@puff-social/commons";
+import { Event, Op, UserFlags } from "@puff-social/commons";
 
 import { Session } from "..";
 import { Groups } from "../../data";
 import { verifyByToken } from "../../helpers/hash";
+import { LeaveGroup } from "./LeaveGroup";
 
 interface Data {
   token: string;
@@ -11,6 +12,11 @@ interface Data {
 export async function LinkUser(this: Session, data: Data) {
   const verified = await verifyByToken(data.token);
   if (!verified) return;
+
+  if (verified.user.flags & UserFlags.suspended) {
+    if (this.group_id) LeaveGroup.bind(this);
+    this.close(4003, "USER_SUSPENDED");
+  }
 
   this.user = verified.user;
   this.voice = verified.voice;
