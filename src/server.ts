@@ -46,6 +46,10 @@ wss.on("connection", (socket) => {
     }
 
     setTimeout(() => {
+      console.log(
+        `DEBUG: Checking state of session ${session.id} - State: ${session.socket.readyState} - last hb: ${session.last_heartbeat}`
+      );
+
       if (session.socket.readyState != session.socket.OPEN) {
         session.close();
         Sessions.delete(session.id);

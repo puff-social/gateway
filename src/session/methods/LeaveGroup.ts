@@ -44,7 +44,9 @@ export async function LeaveGroup(this: Session) {
         if (group.members.size == 0) group.delete();
       }, 30 * 1000);
     } else if (group.owner_session_id == this.id) {
+      console.log(`DEBUG: Transferring ownership of group ${group.id}`);
       const [next] = Array.from(group.members)[0];
+      console.log(`DEBUG: Transferring to ${next}`);
       if (next) TransferGroupOwner.bind(this)({ session_id: next });
     }
   }
