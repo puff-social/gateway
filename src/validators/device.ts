@@ -17,7 +17,9 @@ export const deviceUpdate = z
       name: z.string(),
       temp: z.number(),
       time: z.string(),
-      intensity: z.number(),
+      color: z.string().optional(),
+      moodId: z.string().optional(),
+      intensity: z.number().optional(),
     }),
   })
   .partial()
