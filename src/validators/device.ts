@@ -13,7 +13,12 @@ export const deviceUpdate = z
     chamberType: z.union([z.literal(0), z.literal(1), z.literal(3)]),
     chargeSource: z.union([z.literal(0), z.literal(1), z.literal(3)]),
     activeColor: z.object({ r: z.number(), g: z.number(), b: z.number() }),
-    profile: z.object({ name: z.string(), temp: z.number(), time: z.string() }),
+    profile: z.object({
+      name: z.string(),
+      temp: z.number(),
+      time: z.string(),
+      intensity: z.number(),
+    }),
   })
   .partial()
   .strip()
