@@ -1,4 +1,4 @@
-import { Event, Op } from "@puff-social/commons";
+import { Event, Op, UserFlags } from "@puff-social/commons";
 
 import { Session } from "..";
 import { Groups, Sessions } from "../../data";
@@ -26,7 +26,10 @@ export async function KickMember(this: Session, data: Data) {
   if (group.owner_session_id == data.session_id)
     return this.error(Event.GroupActionError, { code: "CANNOT_KICK_OWNER" });
 
-  if (this.id != group.owner_session_id)
+  if (
+    this.id != group.owner_session_id &&
+    !(this.user?.flags || 0 & UserFlags.admin)
+  )
     return this.error(Event.GroupActionError, { code: "NOT_OWNER" });
 
   const session = Sessions.get(data.session_id);

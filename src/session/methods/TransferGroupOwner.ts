@@ -1,4 +1,4 @@
-import { Event, Op } from "@puff-social/commons";
+import { Event, Op, UserFlags } from "@puff-social/commons";
 
 import { Session } from "..";
 import { Groups } from "../../data";
@@ -18,7 +18,10 @@ export async function TransferGroupOwner(this: Session, data: Data) {
     if (!group)
       return this.error(Event.GroupActionError, { code: "NOT_IN_GROUP" });
 
-    if (group.owner_session_id != this.id)
+    if (
+      group.owner_session_id != this.id &&
+      !(this.user?.flags || 0 & UserFlags.admin)
+    )
       return this.error(Event.GroupActionError, { code: "NOT_OWNER" });
 
     if (!group.members.get(data.session_id))

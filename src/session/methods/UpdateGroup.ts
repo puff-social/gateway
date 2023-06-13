@@ -1,4 +1,4 @@
-import { Event, Op } from "@puff-social/commons";
+import { Event, Op, UserFlags } from "@puff-social/commons";
 
 import { Session } from "..";
 import { Groups, sendPublicGroups } from "../../data";
@@ -18,7 +18,10 @@ export async function UpdateGroup(this: Session, data: Data) {
   if (!group)
     return this.error(Event.GroupActionError, { code: "NOT_IN_GROUP" });
 
-  if (this.id != group.owner_session_id)
+  if (
+    this.id != group.owner_session_id &&
+    !(this.user?.flags || 0 & UserFlags.admin)
+  )
     return this.error(Event.GroupActionError, { code: "NOT_OWNER" });
 
   const validate = await groupUpdate.parseAsync(data);
