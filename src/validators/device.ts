@@ -11,7 +11,12 @@ export const deviceUpdate = z
     state: z.number(),
     totalDabs: z.number(),
     chamberType: z.union([z.literal(0), z.literal(1), z.literal(3)]),
-    chargeSource: z.union([z.literal(0), z.literal(1), z.literal(3)]),
+    chargeSource: z.union([
+      z.literal(0),
+      z.literal(1),
+      z.literal(2),
+      z.literal(3),
+    ]),
     activeColor: z.object({ r: z.number(), g: z.number(), b: z.number() }),
     profile: z.object({
       name: z.string(),
