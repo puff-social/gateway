@@ -9,6 +9,7 @@ export const deviceUpdate = z
     temperature: z.number().nullable(),
     battery: z.number(),
     state: z.number(),
+    stateTime: z.number(),
     totalDabs: z.number(),
     chamberType: z.union([z.literal(0), z.literal(1), z.literal(3)]),
     chargeSource: z.union([
