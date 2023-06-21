@@ -11,6 +11,7 @@ export const deviceUpdate = z
     state: z.number(),
     stateTime: z.number(),
     totalDabs: z.number(),
+    dabsPerDay: z.number(),
     chamberType: z.union([z.literal(0), z.literal(1), z.literal(3)]),
     chargeSource: z.union([
       z.literal(0),
