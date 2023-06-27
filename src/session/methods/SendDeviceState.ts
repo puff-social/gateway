@@ -54,7 +54,7 @@ export async function SendDeviceState(this: Session, data: Data) {
         group_id: this.group_id,
         away: this.away,
         mobile: this.mobile,
-        joined: group.members.get(this.id)?.joined.getDate(),
+        joined: group.members.get(this.id)?.joined.toISOString(),
       });
 
     if (!this.away && "state" in validate) {

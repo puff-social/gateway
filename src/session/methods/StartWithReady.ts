@@ -18,6 +18,11 @@ export async function StartWithReady(this: Session) {
         code: "INVALID_GROUP_STATE",
       });
 
+    if (!group.ready.includes(this.id))
+      return this.error(Event.GroupActionError, {
+        code: "SESSION_NOT_READY",
+      });
+
     group.state = "seshing";
 
     group?.broadcast(
