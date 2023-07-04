@@ -28,6 +28,11 @@ export const deviceUpdate = z
       moodId: z.string().optional(),
       intensity: z.number().optional(),
     }),
+    lastDab: z
+      .object({
+        timestamp: z.date(),
+      })
+      .optional(),
   })
   .partial()
   .strip()
