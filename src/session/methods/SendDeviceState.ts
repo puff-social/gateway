@@ -1,10 +1,4 @@
-import {
-  ChamberType,
-  ChargeSource,
-  Colors,
-  DeviceState,
-  GatewayDeviceProfile,
-} from "@puff-social/commons/dist/puffco";
+import { DeviceState } from "@puff-social/commons/dist/puffco";
 import { keydb } from "@puff-social/commons/dist/connectivity/keydb";
 import { Event, Op } from "@puff-social/commons";
 
@@ -13,22 +7,7 @@ import { Groups } from "../../data";
 import { deviceUpdate } from "../../validators/device";
 import { StartWithReady } from "./StartWithReady";
 
-interface Data {
-  deviceName: string;
-  deviceMac?: string;
-  deviceModel: string;
-  brightness: number;
-  temperature: number;
-  battery: number;
-  state: number;
-  totalDabs: number;
-  activeColor: Colors;
-  chargeSource: ChargeSource;
-  profile: GatewayDeviceProfile;
-  chamberType: ChamberType;
-}
-
-export async function SendDeviceState(this: Session, data: Data) {
+export async function SendDeviceState(this: Session, data: DeviceState) {
   try {
     if (!this.group_id)
       return this.error(Event.GroupActionError, { code: "NOT_IN_GROUP" });

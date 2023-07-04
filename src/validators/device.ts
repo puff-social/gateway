@@ -30,7 +30,7 @@ export const deviceUpdate = z
     }),
     lastDab: z
       .object({
-        timestamp: z.date(),
+        timestamp: z.number(),
       })
       .optional(),
   })
