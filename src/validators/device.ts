@@ -30,6 +30,10 @@ export const deviceUpdate = z
     }),
     lastDab: z
       .object({
+        totalTime: z.number(),
+        timeElapsed: z.number(),
+        nominalTemp: z.number(),
+        actualTemp: z.number(),
         timestamp: z.number(),
       })
       .optional(),
