@@ -19,6 +19,11 @@ export async function DeleteGroup(this: Session) {
   )
     return this.error(Event.GroupActionError, { code: "NOT_OWNER" });
 
+  if (group.persistent && !(this.user?.flags || 0 & UserFlags.admin))
+    return this.error(Event.GroupActionError, {
+      code: "CANNOT_DELETE_PERSISTENT_GROUP",
+    });
+
   group?.broadcast(
     { op: Op.Event, event: Event.GroupDelete },
     { group_id: group.id }

@@ -6,8 +6,10 @@ export const groupJoin = z.object({
 
 export const groupCreate = z
   .object({
+    id: z.string().max(16).optional(),
     name: z.string().max(32).optional(),
     visibility: z.enum(["public", "private"]).default("private").optional(),
+    persistent: z.boolean().optional(),
   })
   .optional();
 
@@ -15,6 +17,7 @@ export const groupUpdate = z
   .object({
     name: z.string().max(32).optional(),
     visibility: z.enum(["public", "private"]).default("private").optional(),
+    persistent: z.boolean().optional(),
     owner_session_id: z.string().uuid().optional(),
   })
   .optional();

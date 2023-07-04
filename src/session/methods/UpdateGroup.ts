@@ -7,6 +7,7 @@ import { groupUpdate } from "../../validators/group";
 interface Data {
   name: string;
   visbility: "public" | "private";
+  persistent: boolean;
 }
 
 export async function UpdateGroup(this: Session, data: Data) {
@@ -25,6 +26,9 @@ export async function UpdateGroup(this: Session, data: Data) {
     return this.error(Event.GroupActionError, { code: "NOT_OWNER" });
 
   const validate = await groupUpdate.parseAsync(data);
+
+  if (!(this.user?.flags || 0 & UserFlags.admin) && "persistent" in data)
+    return this.error(Event.GroupActionError, { code: "NOT_PERMITTED" });
 
   if (!validate)
     return this.error(Event.GroupActionError, { code: "INVALID_DATA" });

@@ -41,7 +41,7 @@ export async function LeaveGroup(this: Session) {
 
     if (group.members.size == 0) {
       setTimeout(() => {
-        if (group.members.size == 0) group.delete();
+        if (group.members.size == 0 && !group.persistent) group.delete();
       }, 30 * 1000);
     } else if (group.owner_session_id == this.id) {
       console.log(`DEBUG: Transferring ownership of group ${group.id}`);

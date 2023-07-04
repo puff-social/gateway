@@ -14,6 +14,7 @@ export interface Group {
   state: string;
   sesh_counter: number;
   owner_session_id: string;
+  persistent: boolean;
 
   members: Map<string, { id: string; joined: Date }>;
   ready: string[];
@@ -25,6 +26,7 @@ export class Group extends EventEmitter {
     name?: string;
     id?: string;
     visilibity?: string;
+    persistent?: boolean;
   }) {
     super();
 
@@ -34,6 +36,7 @@ export class Group extends EventEmitter {
     this.state = "chilling";
     this.sesh_counter = 0;
     this.owner_session_id = options.owner;
+    this.persistent = options.persistent ?? false;
 
     this.members = new Map();
     this.ready = [];

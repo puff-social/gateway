@@ -1,4 +1,4 @@
-import { Event, Op } from "@puff-social/commons";
+import { Event, Op, UserFlags } from "@puff-social/commons";
 
 import { groupCreate } from "../../validators/group";
 import { Groups, sendPublicGroups } from "../../data";
@@ -8,6 +8,7 @@ import { Session } from "..";
 interface Data {
   name?: string;
   visibility?: "public" | "private";
+  persistent?: boolean;
 }
 
 export async function CreateGroup(this: Session, data: Data) {
@@ -17,10 +18,19 @@ export async function CreateGroup(this: Session, data: Data) {
     });
 
   const payload = await groupCreate.parseAsync(data);
+
+  if (
+    !(this.user?.flags || 0 & UserFlags.admin) &&
+    ("persistent" in data || "id" in data)
+  )
+    return this.error(Event.GroupActionError, { code: "NOT_PERMITTED" });
+
   const group = new Group({
     owner: this.id,
+    id: payload?.id,
     name: payload?.name,
     visilibity: payload?.visibility,
+    persistent: payload?.persistent,
   });
 
   Groups.set(group.id, group);
