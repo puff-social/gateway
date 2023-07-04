@@ -54,6 +54,7 @@ export async function JoinGroup(this: Session, data: Data) {
       group_id: group.id,
       name: group.name,
       visibility: group.visibility,
+      persistent: group.persistent,
       owner_session_id: group.owner_session_id,
       state: group.state,
       sesh_counter: group.sesh_counter,

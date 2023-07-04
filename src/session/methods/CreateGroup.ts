@@ -63,6 +63,7 @@ export async function CreateGroup(this: Session, data: Data) {
       group_id: group.id,
       name: group.name,
       visibility: group.visibility,
+      persistent: group.persistent,
       owner_session_id: this.id,
     }
   );
@@ -75,6 +76,7 @@ export async function CreateGroup(this: Session, data: Data) {
       group_id: group.id,
       name: group.name,
       visibility: group.visibility,
+      persistent: group.persistent,
       owner_session_id: this.id,
       state: group.state,
       sesh_counter: group.sesh_counter,
