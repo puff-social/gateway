@@ -28,6 +28,7 @@ export const deviceUpdate = z
       moodId: z.string().optional(),
       intensity: z.number().optional(),
     }),
+    utcTime: z.number(),
     lastDab: z
       .object({
         totalTime: z.number(),
