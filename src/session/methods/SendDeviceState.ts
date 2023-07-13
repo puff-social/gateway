@@ -3,7 +3,7 @@ import { keydb } from "@puff-social/commons/dist/connectivity/keydb";
 import { Event, Op } from "@puff-social/commons";
 
 import { Session } from "..";
-import { Groups } from "../../data";
+import { Groups, Sessions } from "../../data";
 import { deviceUpdate } from "../../validators/device";
 import { StartWithReady } from "./StartWithReady";
 
@@ -20,6 +20,41 @@ export async function SendDeviceState(this: Session, data: DeviceState) {
     const validate = await deviceUpdate.parseAsync(data);
     if (!validate)
       return this.error(Event.GroupActionError, { code: "INVALID_DATA" });
+
+    if (
+      (this.device_state?.deviceMac || validate.deviceMac) &&
+      ("totalDabs" in validate ||
+        "dabsPerDay" in validate ||
+        "lastDab" in validate) &&
+      (this.device_state?.totalDabs != validate?.totalDabs ||
+        this.device_state?.dabsPerDay != validate?.dabsPerDay ||
+        this.device_state?.lastDab != validate?.lastDab)
+    ) {
+      for (const { id } of Array.from(Sessions, ([, { id }]) => ({
+        id,
+      }))) {
+        const session = Sessions.get(id);
+        if (
+          session?.watching_devices?.includes(
+            (this.device_state?.deviceMac ?? validate.deviceMac) as string
+          )
+        )
+          session?.send(
+            {
+              op: Op.Event,
+              event: Event.WatchedDeviceUpdate,
+            },
+            {
+              id: `device_${Buffer.from(
+                (this.device_state?.deviceMac ?? validate.deviceMac) as string
+              ).toString("base64")}`,
+              dabs: validate.totalDabs,
+              dabsPerDay: validate.dabsPerDay,
+              lastDab: validate.lastDab,
+            }
+          );
+      }
+    }
 
     if (!this.device_state) this.device_state = validate as DeviceState;
     else

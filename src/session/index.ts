@@ -28,6 +28,7 @@ import { ResumeSession } from "./methods/ResumeSession";
 import { checkRateLimit } from "../ratelimit";
 import { Heartbeat } from "./methods/Heartbeat";
 import { Groups } from "../data";
+import { WatchDevice } from "./methods/WatchDevice";
 
 export interface Session {
   id: string;
@@ -42,6 +43,8 @@ export interface Session {
   device_state?: DeviceState;
   voice?: VoiceChannelState;
   user?: users;
+
+  watching_devices?: string[];
 
   alive_timer: NodeJS.Timer;
   last_heartbeat: Date;
@@ -303,6 +306,15 @@ export class Session extends EventEmitter {
       name: "heartbeat",
       op: Op.Heartbeat,
       func: Heartbeat,
+    },
+    {
+      name: "watch_device",
+      op: Op.WatchDevice,
+      func: WatchDevice,
+      ratelimit: {
+        interval: 30 * 1000,
+        limit: 2,
+      },
     },
   ];
 
