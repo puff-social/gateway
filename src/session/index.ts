@@ -104,6 +104,7 @@ export class Session extends EventEmitter {
         if (this.socket.readyState == this.socket.OPEN)
           this.socket.close(4002, "HEARTBEAT_NOT_RECEIVED");
         if (this.alive_timer) clearInterval(this.alive_timer);
+        this.close();
       }
     }, 15 * 1000);
   }
