@@ -36,10 +36,10 @@ jobs:
         uses: danielr1996/kubectl-action@1.0.0
         with:
           kubeconfig: ${{ secrets.KUBECONFIG }}
-          args: set image --record deployment/puffsocial-gateway app=ghcr.io/${{ github.repository }}:${{ github.sha }}
+          args: set image --record deployment/gateway -n puff app=ghcr.io/${{ github.repository }}:${{ github.sha }}
 
       - name: Verify deployment
         uses: danielr1996/kubectl-action@1.0.0
         with:
           kubeconfig: ${{ secrets.KUBECONFIG }}
-          args: rollout status deployment/puffsocial-gateway
+          args: rollout status deployment/gateway -n puff
