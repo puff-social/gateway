@@ -217,7 +217,7 @@ internal.post(
             : req.body.payload.data?.device_id
             ? session.device_state?.deviceMac ==
               Buffer.from(
-                req.body.payload.data?.idevice_idd.split("_")[1],
+                req.body.payload.data?.device_id.split("_")[1],
                 "base64"
               ).toString()
             : session.group_id
