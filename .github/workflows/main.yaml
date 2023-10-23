@@ -26,20 +26,21 @@ jobs:
         with:
           context: .
           push: true
-          tags: ghcr.io/${{ github.repository }}:main,ghcr.io/${{ github.repository }}:${{ github.sha }}
+          tags: ghcr.io/${{ github.repository }}:latest,ghcr.io/${{ github.repository }}:${{ github.sha }}
           build-args: |
             NPM_CONFIG_USERCONFIG=.npmrc.ci
             NPM_TOKEN=${{ secrets.GHCR_TOKEN }}
 
-      - uses: actions/checkout@master
       - name: Deploy to cluster
         uses: danielr1996/kubectl-action@1.0.0
+        if: ${{ !startsWith(github.event.head_commit.message, '[no deploy]') }}
         with:
           kubeconfig: ${{ secrets.KUBECONFIG }}
           args: set image --record deployment/gateway -n puff app=ghcr.io/${{ github.repository }}:${{ github.sha }}
 
       - name: Verify deployment
         uses: danielr1996/kubectl-action@1.0.0
+        if: ${{ !startsWith(github.event.head_commit.message, '[no deploy]') }}
         with:
           kubeconfig: ${{ secrets.KUBECONFIG }}
           args: rollout status deployment/gateway -n puff
