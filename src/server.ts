@@ -202,15 +202,28 @@ internal.post(
             ).toString()
         );
 
-        if (correctSession)
-          correctSession.triggerRemoteAction(req.body.payload);
+        correctSession?.triggerRemoteAction(req.body.payload);
+
+        break;
+      }
+
+      case RemoteAction.INQUIRE_DAB: {
+        const correctSession = sessions.find((session) => session.group_id);
+        correctSession?.triggerRemoteAction(req.body.payload);
+
+        break;
+      }
+
+      case RemoteAction.DISCONNECT:
+      case RemoteAction.REFRESH: {
+        sessions.forEach((session) => {
+          session.triggerRemoteAction(req.body.payload);
+        });
 
         break;
       }
 
       default:
-        // const session = sessions[0];
-        // session.triggerRemoteAction(req.body.payload);
         break;
     }
 
