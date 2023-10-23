@@ -2,7 +2,7 @@ lockfileVersion: 5.4
 
 specifiers:
   '@prisma/client': 4.14.1
-  '@puff-social/commons': ^1.0.31
+  '@puff-social/commons': ^1.0.32
   '@types/node': ^18.15.3
   '@types/route-parser': ^0.1.4
   '@types/uuid': ^9.0.1
@@ -20,7 +20,7 @@ specifiers:
 
 dependencies:
   '@prisma/client': 4.14.1_prisma@4.14.1
-  '@puff-social/commons': 1.0.31_prisma@4.14.1
+  '@puff-social/commons': 1.0.32_prisma@4.14.1
   envsafe: 2.0.3
   fastify: 4.17.0
   route-parser: 0.0.5
@@ -125,8 +125,8 @@ packages:
     resolution: {integrity: sha512-APqFddPVHYmWNKqc+5J5SqrLFfOghKOLZxobmguDUacxOwdEutLsbXPVhNnpFDmuQWQFbXmrTTPoRrrF6B1MWA==}
     requiresBuild: true
 
-  /@puff-social/commons/1.0.31_prisma@4.14.1:
-    resolution: {integrity: sha512-4JmmUMVS3irn6n35LutuEr30EoxNThC0PB56b72qIRrNZgXDvo9UOreh9HsrGwy8N87EC5U6BIlmazG/3ZPzfg==, tarball: download/@puff-social/commons/1.0.31/8f674eeba08e30f58b0fbde43d1ca80989699c8a}
+  /@puff-social/commons/1.0.32_prisma@4.14.1:
+    resolution: {integrity: sha512-P1l/+3Juu7d51qspkSdpwsD3zjA6Wczo+MbxIBZfjb2+kl8eGM2Y+OgNwkV4yjs2tbHn15kmZ22DIO5dzfyEpQ==, tarball: download/@puff-social/commons/1.0.32/2e5b510d0aafeb2ad98775749550a8221fbd513b}
     dependencies:
       '@prisma/client': 4.14.0_prisma@4.14.1
       envsafe: 2.0.3
