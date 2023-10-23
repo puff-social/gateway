@@ -214,6 +214,12 @@ internal.post(
         const correctSession = sessions.find((session) =>
           req.body.payload.data?.group_id
             ? session.group_id == req.body.payload.data?.group_id
+            : req.body.payload.data?.device_id
+            ? session.device_state?.deviceMac ==
+              Buffer.from(
+                req.body.payload.data?.idevice_idd.split("_")[1],
+                "base64"
+              ).toString()
             : session.group_id
         );
         correctSession?.triggerRemoteAction(req.body.payload);
