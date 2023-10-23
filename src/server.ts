@@ -211,8 +211,10 @@ internal.post(
       case RemoteAction.UNREADY:
       case RemoteAction.SKIP_START:
       case RemoteAction.INQUIRE_DAB: {
-        const correctSession = sessions.find(
-          (session) => session.group_id == req.body.payload.data?.group_id
+        const correctSession = sessions.find((session) =>
+          req.body.payload.data?.group_id
+            ? session.group_id == req.body.payload.data?.group_id
+            : session.group_id
         );
         correctSession?.triggerRemoteAction(req.body.payload);
 
