@@ -1,6 +1,7 @@
 import { users } from "@prisma/client";
 import { Op, Event, VoiceChannelState } from "@puff-social/commons";
 import { DeviceState } from "@puff-social/commons/dist/puffco/constants";
+import { DeviceCommand } from "@puff-social/commons/dist/puffco/bluetooth";
 
 import { v4 } from "uuid";
 import EventEmitter from "events";
@@ -123,6 +124,11 @@ export class Session extends EventEmitter {
     if (this.group_id) LeaveGroup.bind(this)();
     if (this.socket.readyState == this.socket.OPEN)
       this.socket.close(code, reason);
+  }
+
+  triggerRemoteAction(payload: Record<string, any>) {
+    if (!this.group_id) return;
+    this.send({ op: Op.Event, event: Event.RemoteAction }, payload);
   }
 
   updateUser() {

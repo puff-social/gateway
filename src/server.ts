@@ -1,7 +1,13 @@
 import { Server } from "ws";
 import Route from "route-parser";
 import { users } from "@prisma/client";
-import { Event, Op, VoiceChannelState } from "@puff-social/commons";
+import {
+  Event,
+  Op,
+  RemoteAction,
+  RemoteActionPayload,
+  VoiceChannelState,
+} from "@puff-social/commons";
 import fastify, { FastifyRequest } from "fastify";
 import { IncomingMessage, ServerResponse, createServer } from "http";
 
@@ -172,6 +178,46 @@ internal.post(
   }
 );
 
+internal.post(
+  "/remote_action",
+  async (
+    req: FastifyRequest<{
+      Body: { user: users; payload: RemoteActionPayload };
+    }>,
+    res
+  ) => {
+    const sessions = getSessionsByUserId(req.body.user.id);
+    if (sessions.length == 0)
+      return res.status(400).send({ code: "user_not_found" });
+
+    switch (req.body.payload.action) {
+      case RemoteAction.BEGIN_HEAT:
+      case RemoteAction.CANCEL_HEAT: {
+        const correctSession = sessions.find(
+          (sess) =>
+            sess.device_state?.deviceMac ==
+            Buffer.from(
+              req.body.payload.data?.id.split("_")[1],
+              "base64"
+            ).toString()
+        );
+
+        if (correctSession)
+          correctSession.triggerRemoteAction(req.body.payload);
+
+        break;
+      }
+
+      default:
+        // const session = sessions[0];
+        // session.triggerRemoteAction(req.body.payload);
+        break;
+    }
+
+    return res.status(204).send();
+  }
+);
+
 internal.listen({ port: env.INTERNAL_PORT, host: "0.0.0.0" }, () => {
-  console.log(`GW > Internally listening on ${env.PORT}`);
+  console.log(`GW > Internally listening on ${env.INTERNAL_PORT}`);
 });
