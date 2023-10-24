@@ -193,13 +193,14 @@ internal.post(
     switch (req.body.payload.action) {
       case RemoteAction.BEGIN_HEAT:
       case RemoteAction.CANCEL_HEAT: {
-        const correctSession = sessions.find(
-          (sess) =>
-            sess.device_state?.deviceMac ==
-            Buffer.from(
-              req.body.payload.data?.id.split("_")[1],
-              "base64"
-            ).toString()
+        const correctSession = sessions.find((sess) =>
+          req.body.payload.data?.id
+            ? sess.device_state?.deviceMac ==
+              Buffer.from(
+                req.body.payload.data?.id.split("_")[1],
+                "base64"
+              ).toString()
+            : sess.device_state?.deviceMac
         );
 
         correctSession?.triggerRemoteAction(req.body.payload);
