@@ -112,6 +112,8 @@ export async function SendDeviceState(this: Session, data: DeviceState) {
       }
     }
 
+    delete validate.serialNumber;
+
     group?.broadcast(
       { op: Op.Event, event: Event.GroupUserDeviceUpdate, ignored: [this.id] },
       {
