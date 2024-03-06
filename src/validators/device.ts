@@ -5,6 +5,7 @@ export const deviceUpdate = z
     deviceName: z.string(),
     deviceMac: z.string(),
     deviceModel: z.string(),
+    serialNumber: z.string(),
     brightness: z.number(),
     temperature: z.number().nullable(),
     battery: z.number(),

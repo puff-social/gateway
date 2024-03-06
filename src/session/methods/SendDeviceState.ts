@@ -1,4 +1,4 @@
-import { DeviceState } from "@puff-social/commons/dist/puffco";
+import { DeviceModels, DeviceState, ProductModelMap, SerialPrefixMap } from "@puff-social/commons/dist/puffco";
 import { keydb } from "@puff-social/commons/dist/connectivity/keydb";
 import { Event, Op } from "@puff-social/commons";
 
@@ -20,6 +20,15 @@ export async function SendDeviceState(this: Session, data: DeviceState) {
     const validate = await deviceUpdate.parseAsync(data);
     if (!validate)
       return this.error(Event.GroupActionError, { code: "INVALID_DATA" });
+
+    if (
+      'deviceModel' in validate &&
+      validate.deviceModel == DeviceModels.Onyx &&
+      'serialNumber' in validate &&
+      validate.serialNumber?.startsWith(SerialPrefixMap.Desert)
+    ) {
+      validate.deviceModel = DeviceModels.Desert;
+    }
 
     if (
       (this.device_state?.deviceMac || validate.deviceMac) &&
