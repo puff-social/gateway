@@ -196,10 +196,10 @@ internal.post(
         const correctSession = sessions.find((sess) =>
           req.body.payload.data?.id
             ? sess.device_state?.deviceMac ==
-              Buffer.from(
-                req.body.payload.data?.id.split("_")[1],
-                "base64"
-              ).toString()
+            Buffer.from(
+              req.body.payload.data?.id.split("_")[1],
+              "base64"
+            ).toString()
             : sess.device_state?.deviceMac
         );
 
@@ -216,12 +216,12 @@ internal.post(
           req.body.payload.data?.group_id
             ? session.group_id == req.body.payload.data?.group_id
             : req.body.payload.data?.device_id
-            ? session.device_state?.deviceMac ==
+              ? session.device_state?.deviceMac ==
               Buffer.from(
                 req.body.payload.data?.device_id.split("_")[1],
                 "base64"
               ).toString()
-            : session.group_id
+              : session.group_id
         );
         correctSession?.triggerRemoteAction(req.body.payload);
 
@@ -244,6 +244,13 @@ internal.post(
     return res.status(204).send();
   }
 );
+
+internal.get('/health', (req, res) => res.status(204).send());
+
+internal.setNotFoundHandler((req, res) => {
+  res.status(404).send({ success: false, error: { code: 'route_not_found' } });
+});
+
 
 internal.listen({ port: env.INTERNAL_PORT, host: "0.0.0.0" }, () => {
   console.log(`GW > Internally listening on ${env.INTERNAL_PORT}`);
