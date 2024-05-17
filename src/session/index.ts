@@ -70,7 +70,7 @@ export class Session extends EventEmitter {
       try {
         const data = JSON.parse(message.toString());
         this.handle(data);
-      } catch (error) {}
+      } catch (error) { }
     });
 
     socket.send(
@@ -92,7 +92,7 @@ export class Session extends EventEmitter {
       try {
         const data = JSON.parse(message.toString());
         this.handle(data);
-      } catch (error) {}
+      } catch (error) { }
     });
 
     this.startAliveTimer();
@@ -152,177 +152,177 @@ export class Session extends EventEmitter {
     op: Op;
     ratelimit?: { interval: number; limit: number };
   }[] = [
-    {
-      name: "join_group",
-      op: Op.Join,
-      func: JoinGroup,
-      ratelimit: {
-        interval: 5 * 1000,
-        limit: 2,
+      {
+        name: "join_group",
+        op: Op.Join,
+        func: JoinGroup,
+        ratelimit: {
+          interval: 5 * 1000,
+          limit: 2,
+        },
       },
-    },
-    {
-      name: "create_group",
-      op: Op.CreateGroup,
-      func: CreateGroup,
-      ratelimit: {
-        interval: 30 * 1000,
-        limit: 1,
+      {
+        name: "create_group",
+        op: Op.CreateGroup,
+        func: CreateGroup,
+        ratelimit: {
+          interval: 30 * 1000,
+          limit: 1,
+        },
       },
-    },
-    {
-      name: "send_device_state",
-      op: Op.SendDeviceState,
-      func: SendDeviceState,
-    },
-    {
-      name: "update_group",
-      op: Op.UpdateGroup,
-      func: UpdateGroup,
-      ratelimit: {
-        interval: 10 * 1000,
-        limit: 10,
+      {
+        name: "send_device_state",
+        op: Op.SendDeviceState,
+        func: SendDeviceState,
       },
-    },
-    {
-      name: "update_user_state",
-      op: Op.UpdateUser,
-      func: UpdateState,
-      ratelimit: {
-        interval: 10 * 1000,
-        limit: 10,
+      {
+        name: "update_group",
+        op: Op.UpdateGroup,
+        func: UpdateGroup,
+        ratelimit: {
+          interval: 10 * 1000,
+          limit: 10,
+        },
       },
-    },
-    {
-      name: "leave_group",
-      op: Op.LeaveGroup,
-      func: LeaveGroup,
-    },
-    {
-      name: "inquire_heat",
-      op: Op.InquireHeating,
-      func: InquireHeat,
-      ratelimit: {
-        interval: 10 * 1000,
-        limit: 3,
+      {
+        name: "update_user_state",
+        op: Op.UpdateUser,
+        func: UpdateState,
+        ratelimit: {
+          interval: 10 * 1000,
+          limit: 10,
+        },
       },
-    },
-    {
-      name: "ready_start",
-      op: Op.StartWithReady,
-      func: StartWithReady,
-      ratelimit: {
-        interval: 10 * 1000,
-        limit: 1,
+      {
+        name: "leave_group",
+        op: Op.LeaveGroup,
+        func: LeaveGroup,
       },
-    },
-    {
-      name: "disconnect_device",
-      op: Op.DisconnectDevice,
-      func: DisconnectDevice,
-    },
-    {
-      name: "send_group_message",
-      op: Op.SendMessage,
-      func: SendMessage,
-      ratelimit: {
-        interval: 10 * 1000,
-        limit: 10,
+      {
+        name: "inquire_heat",
+        op: Op.InquireHeating,
+        func: InquireHeat,
+        ratelimit: {
+          interval: 10 * 1000,
+          limit: 3,
+        },
       },
-    },
-    {
-      name: "stop_sesh",
-      op: Op.StopAwaiting,
-      func: StopHeat,
-      ratelimit: {
-        interval: 10 * 1000,
-        limit: 3,
+      {
+        name: "ready_start",
+        op: Op.StartWithReady,
+        func: StartWithReady,
+        ratelimit: {
+          interval: 10 * 1000,
+          limit: 1,
+        },
       },
-    },
-    {
-      name: "resume_session",
-      op: Op.ResumeSession,
-      func: ResumeSession,
-      ratelimit: {
-        interval: 60 * 1000,
-        limit: 1,
+      {
+        name: "disconnect_device",
+        op: Op.DisconnectDevice,
+        func: DisconnectDevice,
       },
-    },
-    {
-      name: "send_reaction",
-      op: Op.SendReaction,
-      func: SendReaction,
-      ratelimit: {
-        interval: 5 * 1000,
-        limit: 15,
+      {
+        name: "send_group_message",
+        op: Op.SendMessage,
+        func: SendMessage,
+        ratelimit: {
+          interval: 10 * 1000,
+          limit: 10,
+        },
       },
-    },
-    {
-      name: "delete_group",
-      op: Op.DeleteGroup,
-      func: DeleteGroup,
-      ratelimit: {
-        interval: 10 * 1000,
-        limit: 2,
+      {
+        name: "stop_sesh",
+        op: Op.StopAwaiting,
+        func: StopHeat,
+        ratelimit: {
+          interval: 10 * 1000,
+          limit: 3,
+        },
       },
-    },
-    {
-      name: "transfer_group_owner",
-      op: Op.TransferOwnership,
-      func: TransferGroupOwner,
-      ratelimit: {
-        interval: 10 * 1000,
-        limit: 5,
+      {
+        name: "resume_session",
+        op: Op.ResumeSession,
+        func: ResumeSession,
+        ratelimit: {
+          interval: 60 * 1000,
+          limit: 1,
+        },
       },
-    },
-    {
-      name: "kick_group_member",
-      op: Op.KickFromGroup,
-      func: KickMember,
-      ratelimit: {
-        interval: 10 * 1000,
-        limit: 10,
+      {
+        name: "send_reaction",
+        op: Op.SendReaction,
+        func: SendReaction,
+        ratelimit: {
+          interval: 5 * 1000,
+          limit: 15,
+        },
       },
-    },
-    {
-      name: "link_user",
-      op: Op.LinkUser,
-      func: LinkUser,
-      ratelimit: {
-        interval: 60 * 1000,
-        limit: 2,
+      {
+        name: "delete_group",
+        op: Op.DeleteGroup,
+        func: DeleteGroup,
+        ratelimit: {
+          interval: 10 * 1000,
+          limit: 2,
+        },
       },
-    },
-    {
-      name: "set_away_state",
-      op: Op.AwayState,
-      deprecated: true,
-    },
-    {
-      name: "group_strain",
-      op: Op.GroupStrain,
-      deprecated: true,
-    },
-    {
-      name: "set_mobile",
-      op: Op.SetMobile,
-      deprecated: true,
-    },
-    {
-      name: "heartbeat",
-      op: Op.Heartbeat,
-      func: Heartbeat,
-    },
-    {
-      name: "watch_device",
-      op: Op.WatchDevice,
-      func: WatchDevice,
-      ratelimit: {
-        interval: 30 * 1000,
-        limit: 2,
+      {
+        name: "transfer_group_owner",
+        op: Op.TransferOwnership,
+        func: TransferGroupOwner,
+        ratelimit: {
+          interval: 10 * 1000,
+          limit: 5,
+        },
       },
-    },
-  ];
+      {
+        name: "kick_group_member",
+        op: Op.KickFromGroup,
+        func: KickMember,
+        ratelimit: {
+          interval: 10 * 1000,
+          limit: 10,
+        },
+      },
+      {
+        name: "link_user",
+        op: Op.LinkUser,
+        func: LinkUser,
+        ratelimit: {
+          interval: 60 * 1000,
+          limit: 2,
+        },
+      },
+      {
+        name: "set_away_state",
+        op: Op.AwayState,
+        deprecated: true,
+      },
+      {
+        name: "group_strain",
+        op: Op.GroupStrain,
+        deprecated: true,
+      },
+      {
+        name: "set_mobile",
+        op: Op.SetMobile,
+        deprecated: true,
+      },
+      {
+        name: "heartbeat",
+        op: Op.Heartbeat,
+        func: Heartbeat,
+      },
+      {
+        name: "watch_device",
+        op: Op.WatchDevice,
+        func: WatchDevice,
+        ratelimit: {
+          interval: 30 * 1000,
+          limit: 2,
+        },
+      },
+    ];
 
   private async handle(data: SocketMessage) {
     const handler = this.handlers.find((handler) => handler.op == data.op);
@@ -332,18 +332,24 @@ export class Session extends EventEmitter {
         { code: "INVALID_OP_CODE" }
       );
 
-    if (handler.ratelimit) {
-      const ratelimited = await checkRateLimit(
-        handler.name,
-        this.id,
-        handler.ratelimit
-      );
-      if (ratelimited) handler.func?.bind(this, data.d)();
-      else
-        this.send(
-          { op: Op.Event, event: Event.RateLimited },
-          { op: handler.op }
+    try {
+      if (handler.ratelimit) {
+        const ratelimited = await checkRateLimit(
+          handler.name,
+          this.id,
+          handler.ratelimit
         );
-    } else handler.func?.bind(this, data.d)();
+        if (ratelimited) handler.func?.bind(this, data.d)();
+        else
+          this.send(
+            { op: Op.Event, event: Event.RateLimited },
+            { op: handler.op }
+          );
+      } else handler.func?.bind(this, data.d)();
+    } catch (error) {
+      return this.send({ op: Op.Event, event: Event.InternalError }, {
+        code: 'UNCAUGHT_EXCEPTION'
+      });
+    }
   }
 }
