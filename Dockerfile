@@ -12,7 +12,7 @@ RUN pnpm install
 # RUN pnpm prisma generate
 
 COPY . .
-RUN yarn build
+RUN pnpm build
 
 FROM node:18
 
