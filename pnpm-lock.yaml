@@ -12,8 +12,8 @@ importers:
         specifier: 4.14.1
         version: 4.14.1(prisma@4.14.1)
       '@puff-social/commons':
-        specifier: ^1.0.42
-        version: 1.0.42(prisma@4.14.1)
+        specifier: ^1.0.50
+        version: 1.0.50(prisma@4.14.1)
       envsafe:
         specifier: ^2.0.3
         version: 2.0.3
@@ -113,8 +113,8 @@ packages:
   '@prisma/engines@4.14.1':
     resolution: {integrity: sha512-APqFddPVHYmWNKqc+5J5SqrLFfOghKOLZxobmguDUacxOwdEutLsbXPVhNnpFDmuQWQFbXmrTTPoRrrF6B1MWA==}
 
-  '@puff-social/commons@1.0.42':
-    resolution: {integrity: sha512-CNLQIpJR9EP0EwyW8OY75/RBqGHMruCfMUWtE41gc6fo1buuN/4fW6fpQQG8Fyq6WZvd3KueharsuxrYtTAM6g==, tarball: https://npm.pkg.github.com/download/@puff-social/commons/1.0.42/4131e4f64ff3f898155b760dbac59d989d8d9c28}
+  '@puff-social/commons@1.0.50':
+    resolution: {integrity: sha512-nV46nWoshv2Rhi5QEUrH+mfTaLPSstIQSXaai88pv7wgaIankQcXzJkvV7cvmRlw3te6yFB/WQ/OdWBl4+UBTw==, tarball: https://npm.pkg.github.com/download/@puff-social/commons/1.0.50/f706ac26d86b0d48591ff1fe57f9bf19680a245f}
 
   '@tsconfig/node10@1.0.9':
     resolution: {integrity: sha512-jNsYVVxU8v5g43Erja32laIDHXeoNvFEpX33OK4d6hljo3jDhCBDhx5dhCCTMWUojscpAagGiRkBKxpdl9fxqA==}
@@ -683,7 +683,7 @@ snapshots:
 
   '@prisma/engines@4.14.1': {}
 
-  '@puff-social/commons@1.0.42(prisma@4.14.1)':
+  '@puff-social/commons@1.0.50(prisma@4.14.1)':
     dependencies:
       '@prisma/client': 4.14.0(prisma@4.14.1)
       envsafe: 2.0.3
